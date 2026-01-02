@@ -1,0 +1,3 @@
+# config/.htaccess
+# このディレクトリへの直接アクセスを禁止
+Deny from all

@@ -1,0 +1,15 @@
+<?php
+// config/stripe.php.sample
+// 
+// このファイルをコピーして stripe.php を作成し、
+// あなた自身のStripe APIキーに書き換えてください
+
+// Stripe管理画面の「開発者 > APIキー」から（テストモード）
+define('STRIPE_SECRET_KEY', 'sk_test_YOUR_SECRET_KEY_HERE');
+define('STRIPE_PUBLISHABLE_KEY', 'pk_test_YOUR_PUBLISHABLE_KEY_HERE');
+
+// Webhook署名シークレット（Stripe CLIの listen で出るやつ or ダッシュボードのWebhook設定）
+define('STRIPE_WEBHOOK_SECRET', 'whsec_YOUR_WEBHOOK_SECRET_HERE');
+
+// あなたのアプリのベースURL
+define('APP_BASE_URL', 'http://localhost/gs_code/1229_event');

@@ -1,0 +1,179 @@
+/*===============================  
+    login.htmlに対応するCSSファイル
+=============================== */
+
+.login {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login_inner {
+    max-width: 300px;
+    text-align: center;
+    padding: 15px 50px 30px 50px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+}
+
+.login_text {
+    font-size: 20px;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+.login-btn,
+.btn-primary {
+    /* ログインボタン */
+    /* 初期設定リセット */
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    outline: none;
+    padding: 0;
+    appearance: none;
+
+    /* ボタンデザイン */
+    border-radius: 4px;
+    border: 1px solid #dadce0;
+    width: 250px;
+    padding: 8px;
+    background-color: #009688;
+    border: 1px solid #009688;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.login_sub {
+    margin-bottom: 13px;
+    font-size: 13px;
+}
+
+.divider {
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    /* ORと線の間隔 */
+    margin: 18px 0;
+    /* 上下余白 */
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #d9d9d9;
+    /* 線の色 */
+}
+
+.divider__text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #777;
+    letter-spacing: 0.08em;
+}
+
+.loginForm_inner {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.input_area {
+    padding: 8px;
+}
+
+.login-btn {
+    margin-top: 15px;
+}
+
+.new_registration {
+    font-size: 11px;
+    margin-top: 20px;
+    color: #777;
+}
+
+
+/*===============================  
+    signup.htmlに対応するCSSファイル
+=============================== */
+
+.personal_setting {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.personal_setting_inner {
+    border: 1px solid #e0e0e0;
+    margin: 0 auto;
+    padding: 24px 32px;
+    max-width: 520px;
+    box-sizing: border-box;
+}
+
+.personal_setting_form {
+    max-width: 420px;
+    margin: 0 auto;
+    font-size: 14px;
+}
+
+.form-group,
+.gender_row,
+.birthdate_row,
+.mail_row,
+.password_row {
+    margin: 0 0 15px;
+}
+
+.personal_setting_form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+/* 入力共通 */
+.personal_setting_form input[type="text"],
+.personal_setting_form input[type="email"],
+.personal_setting_form input[type="date"],
+.personal_setting_form input[type="password"],
+.personal_setting_form select{
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* 姓・名を横並びに */
+.name-row {
+    display: flex;
+    gap: 8px;
+}
+
+.name-field {
+    flex: 1;
+}
+
+.form_title {
+    font-size: 18px;
+    text-align: center;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+.name-row {
+    margin-bottom: 15px;
+}
+
+.btn-primary {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    margin: 40px auto 0;
+}

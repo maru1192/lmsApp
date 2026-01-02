@@ -1,0 +1,27 @@
+# 機密情報を含むファイル
+config/stripe.php
+.env
+
+# ベンダーディレクトリ
+vendor/
+
+# 一時ファイル
+tmp/*
+!tmp/.gitkeep
+
+# アップロードファイル
+uploads/*
+!uploads/.gitkeep
+uploads/headers/*
+!uploads/headers/.gitkeep
+
+# ログファイル
+logs/
+*.log
+
+# Mac
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

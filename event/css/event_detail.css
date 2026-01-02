@@ -1,0 +1,278 @@
+/* css/event_detail.css */
+
+body {
+    background: #f5f5f5;
+    /* 画像の青背景っぽく */
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: #111;
+}
+
+.page {
+    padding: 18px;
+}
+
+.layout {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+}
+
+/* 左右比率 */
+.main {
+    flex: 1;
+}
+
+.side {
+    width: 360px;
+}
+
+/* 共通カード */
+.card,
+.sideCard {
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, .12);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
+}
+
+/* --- メインカード --- */
+.card {
+    padding: 18px;
+}
+
+.cardHeader {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+
+/* 日付バッジ */
+.dateBadge {
+    width: 64px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #f1b24d;
+    color: #fff;
+    text-align: center;
+    flex: 0 0 auto;
+}
+
+.badgeMonth {
+    font-size: 14px;
+    padding: 8px 0 2px;
+    font-weight: 700;
+}
+
+.badgeDay {
+    font-size: 26px;
+    padding: 0 0 10px;
+    font-weight: 800;
+}
+
+
+.title {
+    font-size: 28px;
+    line-height: 1.2;
+    margin: 0;
+    font-weight: 800;
+}
+
+.subtitle{
+    font-size: 16px;
+    color: #888;
+    margin-top:6px;
+}
+
+.favBtn {
+    border: 1px solid rgba(0, 0, 0, .15);
+    background: #f6f6f6;
+    border-radius: 6px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+}
+
+.divider {
+    border: none;
+    border-top: 1px dashed rgba(0, 0, 0, .2);
+    margin: 14px 0;
+}
+
+.hero {
+    margin: 10px 0 14px;
+}
+
+.heroImg {
+    width: 100%;
+    display: block;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, .08);
+}
+
+.heroPlaceholder {
+    height: 280px;
+    border-radius: 8px;
+    border: 1px dashed rgba(0, 0, 0, .2);
+    display: grid;
+    place-items: center;
+    color: rgba(0, 0, 0, .55);
+    gap: 8px;
+}
+
+.sectionBar {
+    background: #efefef;
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: rgba(0, 0, 0, .75);
+}
+
+.sectionBody {
+    padding: 12px 2px 2px;
+}
+
+.sectionTitle {
+    font-size: 20px;
+    margin: 10px 0 10px;
+    font-weight: 800;
+}
+
+.desc {
+    margin: 0;
+    line-height: 1.8;
+    color: rgba(0, 0, 0, .85);
+}
+
+/* --- サイド --- */
+.sideCard {
+    padding: 14px;
+}
+
+.status {
+    border-radius: 6px;
+    padding: 10px 12px;
+    text-align: center;
+    font-weight: 800;
+    margin-bottom: 12px;
+    background: #f1b24d;
+    color: #fff;
+}
+
+.status.is-finished {
+    background: #666;
+}
+
+.sideDate {
+    text-align: center;
+    padding: 6px 0 4px;
+}
+
+.sideDateMain {
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.sideTime {
+    margin-top: 6px;
+    font-size: 16px;
+    color: rgba(0, 0, 0, .7);
+    font-weight: 700;
+}
+
+.calendarLinks {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin: 10px 0 12px;
+}
+
+.calLink {
+    color: #1a4f9c;
+    text-decoration: underline;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.apply_area{
+    text-align: center;
+    margin: 30px;
+}
+
+.applyBtn {
+    border: none;
+    border-radius: 8px;
+    background: #c8281a;
+    color: #fff;
+    padding: 12px 30px;
+    font-weight: 900;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+}
+
+.applyBtn:disabled {
+    background: #bbb;
+    cursor: not-allowed;
+}
+
+.notice {
+    margin-top: 10px;
+    padding: 10px 10px;
+    border: 1px solid rgba(0, 0, 0, .15);
+    background: #fff7cc;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(0, 0, 0, .75);
+}
+
+.recruit {
+    margin-top: 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-top: 1px solid rgba(0, 0, 0, .12);
+    border-bottom: 1px solid rgba(0, 0, 0, .12);
+    text-align: center;
+}
+
+.recruitTitle {
+    font-weight: 800;
+    color: rgba(0, 0, 0, .6);
+    margin-bottom: 6px;
+}
+
+.recruitDate {
+    font-size: 13px;
+    color: rgba(0, 0, 0, .55);
+    line-height: 1.6;
+}
+
+.contactLink {
+    display: block;
+    margin-top: 12px;
+    text-align: center;
+    color: rgba(0, 0, 0, .75);
+    font-weight: 800;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.contactLink i {
+    margin-right: 6px;
+}
+
+/* --- レスポンシブ --- */
+@media (max-width: 980px) {
+    .layout {
+        flex-direction: column;
+    }
+
+    .side {
+        width: 100%;
+    }
+}
