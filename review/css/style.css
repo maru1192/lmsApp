@@ -1,0 +1,493 @@
+/* ==========================================================================
+    基本スタイル
+   ========================================================================== */
+
+textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 8px;
+    font-size: 14px;
+    color: #666666;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+
+/* ==========================================================================
+    レイアウト
+   ========================================================================== */
+
+.review {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.title {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.this_week,
+.next_week {
+    padding: 25px 35px;
+    margin-bottom: 30px;
+    border: 1px solid #0f2b57;
+    border-radius: 7px;
+}
+
+.thisweek_title,
+.nextweek_title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #0f2b57;
+    margin-top:30px ;
+}
+
+.element {
+    margin-bottom: 25px;
+}
+
+.sub_title {
+    margin-bottom: 7px;
+    font-weight: 550;
+}
+
+
+/* ==========================================================================
+    感情選択コンポーネント
+   ========================================================================== */
+/* 感情選択グリッド */
+.emotion-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px 12px;
+    align-items: start;
+}
+
+.emotion-item {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.emotion-item input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.emotion-item .dot {
+    width: 50px;
+    height: 50px;
+    display: inline-block;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    transition: transform 0.08s ease, border-color 0.08s ease;
+}
+
+.emotion-item .label {
+    font-size: 13px;
+    color: #333;
+    text-align: center;
+}
+
+/* 感情の色分け */
+.emotion-item.tone-good .dot {
+    background: #bfe3c7;
+}
+
+.emotion-item.tone-calm .dot {
+    background: #cbe7f1;
+}
+
+.emotion-item.tone-bad .dot {
+    background: #efc0c3;
+}
+
+/* 選択状態 */
+.emotion-item input:checked+.dot {
+    border-color: #333;
+    transform: scale(1.02);
+}
+
+/* フォーカス状態（アクセシビリティ） */
+.emotion-item input:focus-visible+.dot {
+    outline: 3px solid rgba(0, 0, 0, 0.15);
+    outline-offset: 4px;
+}
+
+
+/* ==========================================================================
+    感情と感想の2カラムレイアウト
+   ========================================================================== */
+
+.emotion_thought {
+    display: flex;
+    gap: 45px;
+    align-items: stretch;
+}
+
+.emotion_thought>.form_emotion,
+.emotion_thought>.form_thoughts {
+    flex: 1;
+    min-width: 0;
+}
+
+.emotion_thought>.form_emotion {
+    flex: 0 0 55%;
+    display: flex;
+    flex-direction: column;
+}
+
+.emotion_thought>.form_thoughts {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.emotion_thought>.form_thoughts textarea {
+    flex: 1;
+    min-height: 0;
+}
+
+#curriculum_title {
+    padding: 8px;
+    border-radius: 5px;
+}
+
+.curriculum .sub_title {
+    display: block;
+    margin-bottom: 8px;
+}
+
+
+/* ==========================================================================
+    学習時間目標の表レイアウト
+   ========================================================================== */
+
+.week-table {
+    width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin-top: 8px;
+}
+
+.week-table th,
+.week-table td {
+    border: 1px solid #ddd;
+    padding: 10px 8px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.week-table th {
+    background: linear-gradient(90deg, rgba(102, 194, 255, .18), rgba(122, 215, 181, .18));
+    font-weight: bold;
+}
+
+.week-table .hours,
+.week-table .auto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.week-table input {
+    box-sizing: border-box;
+}
+
+
+/* inputがセル幅に合わせて縮むようにする */
+.week-table .hours input,
+.week-table .auto input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    text-align: right;
+    font-size: 14px;
+}
+
+.week-table .unit {
+    font-size: 12px;
+    color: #666;
+}
+
+.week-table td.total {
+    background: linear-gradient(90deg,
+            rgba(102, 194, 255, .26),
+            rgba(122, 215, 181, .26));
+    font-weight: 800;
+    color: #1f2a2f;
+    border-color: rgba(0, 0, 0, .08);
+}
+
+
+.week-table .auto {
+    background: #fafafa;
+    text-align: left;
+}
+
+.week-table td.blank {
+    border: none;
+    background: transparent;
+    padding: 0;
+}
+
+.week-table .sum-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#curriculum_title {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+/* ==========================================================================
+    ボタンスタイル
+   ========================================================================== */
+
+/* 送信ボタン */
+.btn {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    /* 好みで */
+    margin: 24px auto 0;
+    /* 中央寄せ */
+    padding: 14px 18px;
+
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: .02em;
+
+    color: #fff;
+    background: linear-gradient(90deg, #66c2ff, #7ad7b5);
+    border: none;
+    border-radius: 999px;
+    /* ぷっくり */
+    cursor: pointer;
+
+    box-shadow: 0 10px 22px rgba(0, 0, 0, .14);
+    transition: transform .08s ease, box-shadow .12s ease, filter .12s ease;
+}
+
+/* hover（PC） */
+.btn:hover {
+    filter: brightness(1.02);
+    box-shadow: 0 12px 26px rgba(0, 0, 0, .16);
+    transform: translateY(-1px);
+}
+
+/* 押した瞬間 */
+.btn:active {
+    transform: translateY(0);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .14);
+}
+
+/* キーボードフォーカス */
+.btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, .10), 0 10px 22px rgba(0, 0, 0, .14);
+}
+
+/* 無効化時（もし付けるなら） */
+.btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+
+
+/* ==========================================================================
+    スライダースタイル
+   ========================================================================== */
+
+
+/* 目標達成率（range） */
+.achieve_bar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid #e6e6e6;
+    border-radius: 10px;
+    background: #fff;
+}
+
+/* タイトル行（p）は3カラム全部使う */
+.achieve_bar .sub_title {
+    grid-column: 1 / -1;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.achieve_bar .range-label {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* range本体 */
+.achieve_bar input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 34px;
+    /* つまみが収まる高さ */
+    background: transparent;
+    /* trackは下の疑似要素で作る */
+    cursor: pointer;
+}
+
+/* ===== track（線） ===== */
+.achieve_bar input[type="range"]::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #66c2ff, #7ad7b5);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06);
+}
+
+.achieve_bar input[type="range"]::-moz-range-track {
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #66c2ff, #7ad7b5);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06);
+}
+
+/* ===== thumb（つまみ） ===== */
+.achieve_bar input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid rgba(0, 0, 0, .18);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .14);
+    margin-top: -5px;
+    /* track(8px)に中央合わせ */
+}
+
+.achieve_bar input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid rgba(0, 0, 0, .18);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .14);
+}
+
+/* フォーカス時（キーボード操作） */
+.achieve_bar input[type="range"]:focus-visible {
+    outline: none;
+}
+
+.achieve_bar input[type="range"]:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 6px rgba(0, 0, 0, .08), 0 4px 12px rgba(0, 0, 0, .14);
+}
+
+.achieve_bar input[type="range"]:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 6px rgba(0, 0, 0, .08), 0 4px 12px rgba(0, 0, 0, .14);
+}
+
+.achieve_bar {
+    grid-template-columns: auto 1fr auto auto;
+    /* now分 */
+}
+
+.achieve_bar .range-now {
+    font-size: 12px;
+    font-weight: 700;
+    color: #111;
+}
+
+
+/* ==========================================================================
+    見出しの装飾
+   ========================================================================== */
+
+.title {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    margin: 6px 0 22px;
+    position: relative;
+}
+
+
+
+
+/* ==========================================================================
+    装飾の調整
+   ========================================================================== */
+
+/* ページ全体を“フォーム画面”っぽく */
+body {
+    background: #f4f6f8;
+}
+
+/* フォーム全体の余白と中央寄せ */
+.review {
+    max-width: 920px;
+    /* 800でもOK */
+    margin: 0 auto;
+    padding: 40px 16px;
+    /* 画面端の余白 */
+}
+
+/* 中身を“紙のカード”にする */
+.review_inner {
+    background: #fff;
+    border: 1px solid #e6e6e6;
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .08);
+    padding: 50px 60px;
+}
+
+/* スマホのときは余白を少し減らす */
+@media (max-width: 640px) {
+    .review_inner {
+        padding: 18px 16px;
+        border-radius: 12px;
+    }
+}
+
+.this_week,
+.next_week {
+    border: 1px solid #e9e9e9;
+    background: #fbfbfb;
+    border-radius: 12px;
+    padding: 22px 22px;
+    margin-bottom: 22px;
+}
+
+.title {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0 0 22px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #eee;
+}

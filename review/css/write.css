@@ -1,0 +1,225 @@
+/* =========================================================
+    write.php 見た目用CSS
+========================================================= */
+
+:root {
+    --bg: #f6f8fb;
+    --card: #ffffff;
+    --text: #111827;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+
+    /* index側の雰囲気に寄せた淡いグラデ */
+    --grad-a: rgba(102, 194, 255, .22);
+    --grad-b: rgba(122, 215, 181, .22);
+
+    --radius: 16px;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* 全体 */
+.swrite {
+    padding: 28px 16px 44px;
+}
+
+.swrite_inner {
+    max-width: 920px;
+    margin: 0 auto;
+}
+
+/* ヘッダー */
+.swrite_head {
+    margin-bottom: 14px;
+}
+
+.swrite_badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--grad-a), var(--grad-b));
+    border: 1px solid rgba(0, 0, 0, .06);
+}
+
+.swrite_title {
+    margin: 10px 0 6px;
+    font-size: 22px;
+    letter-spacing: .02em;
+}
+
+.swrite_sub {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+/* カード */
+.swrite_card {
+    margin-top: 14px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+}
+
+.swrite_cardHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.swrite_cardTitle {
+    margin: 0;
+    font-size: 16px;
+}
+
+.swrite_stamp {
+    font-size: 13px;
+    color: var(--muted);
+    background: #fafafa;
+    border: 1px solid rgba(0, 0, 0, .05);
+    padding: 6px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+/* DL（フォームっぽく見せる） */
+.swrite_dl {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+}
+
+.swrite_dl_mt {
+    margin-top: 12px;
+}
+
+.swrite_row {
+    display: grid;
+    grid-template-columns: 230px 1fr;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #fafafa;
+    border: 1px solid rgba(0, 0, 0, .04);
+}
+
+.swrite_row dt {
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.swrite_row dd {
+    margin: 0;
+    font-size: 14px;
+    word-break: break-word;
+}
+
+.swrite_pre {
+    white-space: normal;
+}
+
+/* テーブル */
+.swrite_tableWrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.swrite_table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.swrite_table th {
+    padding: 10px 6px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--grad-a), var(--grad-b));
+    border-bottom: 1px solid var(--line);
+}
+
+.swrite_table td {
+    padding: 10px 6px;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    font-size: 14px;
+}
+
+.swrite_table td:last-child {
+    border-right: none;
+}
+
+.swrite_table tr:last-child td {
+    border-bottom: none;
+}
+
+.swrite_blank {
+    background: transparent;
+}
+
+.swrite_sumLabel {
+    background: rgba(250, 65, 65, .06);
+    font-weight: 800;
+    border-right: 1px solid var(--line);
+}
+
+.swrite_sumVal {
+    background: rgba(250, 65, 65, .06);
+    font-weight: 900;
+}
+
+/* ボタン */
+.swrite_actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.swrite_btn,
+.list_btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 14px;
+    text-decoration: none;
+    color: #111827;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, .10);
+    transition: transform .08s ease, box-shadow .12s ease;
+}
+
+.swrite_btn:hover,
+.list_btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, .08);
+}
+
+.swrite_btn_primary,
+.list_btn_primary {
+    background: linear-gradient(90deg, rgba(102, 194, 255, .35), rgba(122, 215, 181, .35));
+    border: 1px solid rgba(0, 0, 0, .08);
+}
