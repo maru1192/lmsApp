@@ -24,7 +24,6 @@ textarea {
 .review {
     max-width: 800px;
     margin: 0 auto;
-    padding: 20px;
 }
 
 .title {
@@ -453,17 +452,11 @@ body {
     max-width: 920px;
     /* 800でもOK */
     margin: 0 auto;
-    padding: 40px 16px;
-    /* 画面端の余白 */
 }
 
 /* 中身を“紙のカード”にする */
 .review_inner {
-    background: #fff;
-    border: 1px solid #e6e6e6;
-    border-radius: 14px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, .08);
-    padding: 50px 60px;
+    padding: 0px 15px;
 }
 
 /* スマホのときは余白を少し減らす */

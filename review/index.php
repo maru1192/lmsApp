@@ -1,3 +1,11 @@
+<?php
+//設定読み込み（session_start()とh()関数はconfig.php経由でfunc.phpに含まれる）
+require_once __DIR__ . '/../config.php';
+
+// ★共通レイアウト開始
+require_once APP_ROOT . '/parts/layout_start.php';
+?>
+
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -13,7 +21,6 @@
 <body>
     <div class="review">
         <div class="review_inner">
-            <h1 class="title">学習の記録</h1>
             <form action="write.php" method="post">
 
                 <!-- 今週の振り返り -->
@@ -267,6 +274,10 @@
             </form>
         </div>
     </div>
+    <?php
+    // ★共通レイアウト終了
+    require_once APP_ROOT . '/parts/layout_end.php';
+    ?>
 
 </body>
 

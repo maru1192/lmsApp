@@ -1,9 +1,6 @@
 <?php
-//最初にセッションを開始
-session_start();
-
-//関数ファイルの読み込み
-require_once __DIR__ . '/../event/func.php';
+//設定読み込み（session_start()とh()関数はconfig.php経由でfunc.phpに含まれる）
+require_once __DIR__ . '/../config.php';
 
 //ログイン情報がなければログインページへリダイレクト
 sschk();
@@ -81,8 +78,8 @@ if ($status === false) {
     exit('ErrorMessage:' . $error[2]);
 }
 
-
-
+// ★共通レイアウト開始
+require_once APP_ROOT . '/parts/layout_start.php';
 ?>
 
 <!DOCTYPE html>
@@ -192,13 +189,17 @@ if ($status === false) {
                 </dl>
 
                 <div class="swrite_actions">
-                    <a class="swrite_btn swrite_btn_primary" href="index.html">← フォームに戻る</a>
+                    <a class="swrite_btn swrite_btn_primary" href="index.php">← フォームに戻る</a>
                     <a class="list_btn list_btn_primary" href="result.php">フォーム回答一覧</a>
                 </div>
             </section>
 
         </div>
     </div>
+    <?php
+    // ★共通レイアウト終了
+    require_once APP_ROOT . '/parts/layout_end.php';
+    ?>
 </body>
 
 </html>

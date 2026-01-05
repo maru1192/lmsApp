@@ -1,19 +1,16 @@
 <?php
-//最初にセッションを開始
-session_start();
-
-//関数ファイルの読み込み
-require_once __DIR__ . '/../event/func.php';
+//設定読み込み（session_start()とh()関数はconfig.php経由でfunc.phpに含まれる）
+require_once __DIR__ . '/../config.php';
 
 //ログイン情報がなければログインページへリダイレクト
 sschk();
 
 //1.  DB接続します
 try {
-  //Password:MAMP='root',XAMPP=''
-  $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost','root','');
+    //Password:MAMP='root',XAMPP=''
+    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
 } catch (PDOException $e) {
-  exit('DBConnectError'.$e->getMessage());
+    exit('DBConnectError' . $e->getMessage());
 }
 
 //２．データ取得SQL作成
@@ -21,109 +18,110 @@ $stmt = $pdo->prepare("SELECT * FROM weekly_reviews ORDER BY created_at DESC"); 
 $status = $stmt->execute();
 
 //３．データ表示
-$records=[];
+$records = [];
 
-if ($status==false) {
+if ($status == false) {
     //execute（SQL実行時にエラーがある場合）
-  $error = $stmt->errorInfo();
-  exit("ErrorQuery:".$error[2]);
-
-}else{
-  //Selectデータの数だけ自動でループしてくれる
+    $error = $stmt->errorInfo();
+    exit("ErrorQuery:" . $error[2]);
+} else {
+    //Selectデータの数だけ自動でループしてくれる
     while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $records[] = $result;
     }
 }
 
+// ★共通レイアウト開始
+require_once APP_ROOT . '/parts/layout_start.php';
 ?>
 
 <!DOCTYPE html>
 <html lang="ja">
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="css/reset.css">
-        <link rel="stylesheet" href="css/result.css">
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
-        <title>フォーム回答一覧</title>
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/result.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+    <title>フォーム回答一覧</title>
+</head>
 
-    <body>
-        <div class="result-header">
-            <a class="back_btn back_btn_primary" href="index.html">
-                <i class="fas fa-arrow-left"></i>
-                フォームに戻る
-            </a>
+<body>
+    <div class="result-header">
+        <a class="back_btn back_btn_primary" href="index.php">
+            <i class="fas fa-arrow-left"></i>
+            フォームに戻る
+        </a>
+    </div>
+
+    <h1 class="title">
+        <i class="fas fa-list-alt"></i>
+        フォーム回答一覧
+    </h1>
+
+    <?php if (empty($records)): ?>
+        <div class="no-data">
+            <i class="fas fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 15px;"></i>
+            <p>まだ記録がありません</p>
         </div>
-        
-        <h1 class="title">
-            <i class="fas fa-list-alt"></i>
-            フォーム回答一覧
-        </h1>
-
-        <?php if (empty($records)): ?>
-            <div class="no-data">
-                <i class="fas fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 15px;"></i>
-                <p>まだ記録がありません</p>
-            </div>
-        <?php else: ?>
+    <?php else: ?>
 
         <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>日時</th>
-                    <th>目標達成率</th>
-                    <th>印象に残っている感情</th>
-                    <th style="text-align: center; width: 120px;">操作</th>
-                </tr>        
-            </thead>
-
-            <tbody>
-                <?php foreach($records as $index => $r): ?>
+            <table>
+                <thead>
                     <tr>
-                        <td><?= h($r['created_at'] ?? '') ?></td>
-                        <td><?= h($r['achievement_rate'] ?? '') . "%" ?></td>
-                        <td><?= h($r['emotions'] ?? '') ?></td>
-                        <td style="text-align: center;">
-                            <button class="detail-btn" onclick="showDetail(<?= $index ?>)">
-                                <i class="fas fa-eye"></i>
-                                詳細
-                            </button>
-                        </td>
+                        <th>日時</th>
+                        <th>目標達成率</th>
+                        <th>印象に残っている感情</th>
+                        <th style="text-align: center; width: 120px;">操作</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+
+                <tbody>
+                    <?php foreach ($records as $index => $r): ?>
+                        <tr>
+                            <td><?= h($r['created_at'] ?? '') ?></td>
+                            <td><?= h($r['achievement_rate'] ?? '') . "%" ?></td>
+                            <td><?= h($r['emotions'] ?? '') ?></td>
+                            <td style="text-align: center;">
+                                <button class="detail-btn" onclick="showDetail(<?= $index ?>)">
+                                    <i class="fas fa-eye"></i>
+                                    詳細
+                                </button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
 
-        <?php endif; ?>
+    <?php endif; ?>
 
-        <!-- モーダル -->
-        <div id="detailModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">
-                        <i class="fas fa-file-alt"></i>
-                        回答詳細
-                    </div>
-                    <button class="close-btn" onclick="closeModal()">&times;</button>
+    <!-- モーダル -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-file-alt"></i>
+                    回答詳細
                 </div>
-                <div class="modal-body" id="modalBody">
-                    <!-- JavaScriptで内容を動的に挿入 -->
-                </div>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- JavaScriptで内容を動的に挿入 -->
             </div>
         </div>
+    </div>
 
-        <script>
-            const records = <?= json_encode($records, JSON_UNESCAPED_UNICODE) ?>;
+    <script>
+        const records = <?= json_encode($records, JSON_UNESCAPED_UNICODE) ?>;
 
-            function showDetail(index) {
-                const record = records[index];
-                const modalBody = document.getElementById('modalBody');
-                
-                let html = `
+        function showDetail(index) {
+            const record = records[index];
+            const modalBody = document.getElementById('modalBody');
+
+            let html = `
                     <div class="detail-section">
                         <div class="detail-label">
                             <i class="fas fa-calendar-alt"></i>
@@ -230,30 +228,35 @@ if ($status==false) {
                     </div>
                 `;
 
-                modalBody.innerHTML = html;
-                document.getElementById('detailModal').classList.add('show');
-                document.body.style.overflow = 'hidden';
-            }
+            modalBody.innerHTML = html;
+            document.getElementById('detailModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
 
-            function closeModal() {
-                document.getElementById('detailModal').classList.remove('show');
-                document.body.style.overflow = 'auto';
-            }
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
 
-            // モーダル外をクリックしたら閉じる
-            window.onclick = function(event) {
-                const modal = document.getElementById('detailModal');
-                if (event.target === modal) {
-                    closeModal();
-                }
+        // モーダル外をクリックしたら閉じる
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailModal');
+            if (event.target === modal) {
+                closeModal();
             }
+        }
 
-            // Escapeキーでモーダルを閉じる
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape') {
-                    closeModal();
-                }
-            });
-        </script>
-    </body>
+        // Escapeキーでモーダルを閉じる
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+    <?php
+    // ★共通レイアウト終了
+    require_once APP_ROOT . '/parts/layout_end.php';
+    ?>
+</body>
+
 </html>

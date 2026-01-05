@@ -1,12 +1,6 @@
 <?php
-//最初にセッションを開始
-session_start();
-
-// XSS対策
-function h($s)
-{
-    return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
-}
+//設定読み込み（session_start()とh()関数はconfig.php経由でfunc.phpに含まれる）
+require_once __DIR__ . '/../config.php';
 
 // 日付フォーマット（関数を流用）
 function format_event_date_jp($datetime)
@@ -109,6 +103,9 @@ if ($eventTs) {
         . "&dates={$start}/{$end}"
         . "&ctz=" . urlencode('Asia/Tokyo');
 }
+
+// ★共通レイアウト開始
+require_once APP_ROOT . '/parts/layout_start.php';
 ?>
 
 
@@ -129,7 +126,7 @@ if ($eventTs) {
         <div class="layout">
 
             <!-- 左：メイン -->
-            <main class="main">
+            <main class="event_main">
                 <section class="card">
                     <header class="cardHeader">
                         <div class="dateBadge">
@@ -173,7 +170,7 @@ if ($eventTs) {
             </main>
 
             <!-- 右：サイドバー -->
-            <aside class="side">
+            <aside class="event-side">
                 <section class="sideCard">
                     <div class="status <?= h($statusClass) ?>"><?= h($statusLabel) ?></div>
 
@@ -210,6 +207,5 @@ if ($eventTs) {
 
         </div>
     </div>
-</body>
-
-</html>
+<?php
+require_once APP_ROOT . '/parts/layout_end.php';

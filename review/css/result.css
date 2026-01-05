@@ -1,7 +1,5 @@
 body {
-    max-width: 1000px;
     margin: 0 auto;
-    padding: 30px 20px;
     background-color: #fafafa;
 }
 
@@ -113,9 +111,7 @@ td:nth-child(2) {
 }
 
 body {
-    max-width: 1200px;
     margin: 0 auto;
-    padding: 30px 20px;
     background-color: #fafafa;
 }
 

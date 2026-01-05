@@ -20,11 +20,11 @@ body {
 }
 
 /* 左右比率 */
-.main {
+.event_main {
     flex: 1;
 }
 
-.side {
+.event-side {
     width: 360px;
 }
 
@@ -272,7 +272,7 @@ body {
         flex-direction: column;
     }
 
-    .side {
+    .event-side {
         width: 100%;
     }
 }

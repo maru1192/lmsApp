@@ -1,10 +1,9 @@
 <?php
-//最初にセッションを開始
-session_start();
+//設定読み込み（session_start()とh()関数はconfig.php経由でfunc.phpに含まれる）
+require_once __DIR__ . '/../config.php';
 
-//関数ファイルの読み込み
-include('funcs.php');
-
+// ★共通レイアウト開始
+require_once APP_ROOT . '/parts/layout_start.php';
 ?>
 
 <!DOCTYPE html>
@@ -14,7 +13,7 @@ include('funcs.php');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/reset.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/form_append.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     <title>イベント登録ページ</title>
 </head>
@@ -44,7 +43,7 @@ include('funcs.php');
 
         <div class="event_date">
             <p class="sub_title">開催日時</p>
-        <input type="datetime-local" name="date">
+            <input type="datetime-local" name="date">
 
         </div>
 
@@ -60,7 +59,10 @@ include('funcs.php');
 
         <div class="event_fee">
             <p class="sub_title">参加費</p>
-            <input type="number" name="fee">
+            <div class="fee_input_wrapper">
+                <input type="number" name="fee" placeholder="半角数字で入力してください">
+                <span class="unit">円</span>
+            </div>
         </div>
 
         <div class="event_fee">
@@ -72,6 +74,7 @@ include('funcs.php');
         <input type="submit" value="送信" class="btn">
     </form>
 
-</body>
-
-</html>
+    <?php
+    // ★共通レイアウト終了
+    require_once APP_ROOT . '/parts/layout_end.php';
+    ?>

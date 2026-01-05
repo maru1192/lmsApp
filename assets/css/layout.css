@@ -1,0 +1,230 @@
+:root {
+    --topH: 56px;
+    --iconW: 72px;
+    --subW: 240px;
+
+    --navGradA: #0a2f44;
+    --navGradB: #0b3a54;
+
+    --mainBg: #f4f6f9;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Noto Sans JP", sans-serif;
+    background: var(--mainBg);
+}
+
+/* 2列×2行 */
+.app-shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: calc(var(--iconW) + var(--subW)) 1fr;
+    grid-template-rows: var(--topH) 1fr;
+}
+
+/* HOMEのときサブ無し→左カラムをアイコン幅だけにする */
+body[data-has-sub="0"] .app-shell {
+    grid-template-columns: var(--iconW) 1fr;
+}
+
+/* 赤エリア（常に同じ幅を維持） */
+.nav-top {
+    grid-column: 1;
+    grid-row: 1;
+    background: #0a2f44;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    min-width: calc(var(--iconW) + var(--subW));
+}
+
+body[data-has-sub="0"] .nav-top {
+    min-width: calc(var(--iconW) + var(--subW));
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* 右上 */
+.main-top {
+    grid-column: 2;
+    grid-row: 1;
+    background: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, .06);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 18px;
+}
+
+.user-menu {
+    position: relative;
+}
+
+.main-top-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(0, 0, 0, .65);
+    font-weight: 700;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.main-top-right:hover {
+    background: rgba(0, 0, 0, .05);
+}
+
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, .1);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+    min-width: 180px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 1000;
+}
+
+.user-dropdown.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.logout-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    color: #c8281a;
+    text-decoration: none;
+    font-weight: 700;
+    transition: background 0.2s ease;
+}
+
+.logout-link:hover {
+    background: rgba(200, 40, 26, .08);
+}
+
+/* 左ナビ */
+.nav-area {
+    grid-column: 1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: var(--iconW) var(--subW);
+    min-height: calc(100vh - var(--topH));
+}
+
+/* HOME時はグリーン自体を隠す */
+body[data-has-sub="0"] .nav-area {
+    grid-template-columns: var(--iconW);
+}
+
+body[data-has-sub="0"] .nav-sub {
+    display: none;
+}
+
+.nav-icons {
+    background: linear-gradient(180deg, var(--navGradA), var(--navGradB));
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-icon-btn {
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 14px;
+    color: #fff;
+    background: rgba(255, 255, 255, .08);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+}
+
+.nav-icon-btn.is-active {
+    background: rgba(255, 255, 255, .18);
+    outline: 1px solid rgba(255, 255, 255, .25);
+}
+
+.nav-sub {
+    background: linear-gradient(180deg, #07324a, #062a3a);
+    color: #fff;
+    padding: 14px 12px;
+    overflow: auto;
+}
+
+.subpanel {
+    display: none;
+}
+
+.subpanel.is-active {
+    display: block;
+}
+
+.sub-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 900;
+    margin-bottom: 12px;
+    opacity: .95;
+}
+
+.sub-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sub-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #fff;
+    background: rgba(255, 255, 255, .06);
+}
+
+.sub-link:hover {
+    background: rgba(255, 255, 255, .12);
+}
+
+.sub-link.is-current {
+    background: rgba(255, 255, 255, .18);
+}
+
+/* メイン */
+.app-main {
+    grid-column: 2;
+    grid-row: 2;
+    padding: 18px;
+}
+
+.app-content {
+    min-height: calc(100vh - var(--topH) - 36px);
+}

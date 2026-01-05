@@ -6,7 +6,8 @@ session_start();
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-include('event/func.php');
+//関数ファイルの読み込み
+require_once __DIR__ . '/../event/func.php';
 
 //1. POSTデータ取得
 $lastName = $_POST['lastName'] ?? '';
@@ -61,5 +62,5 @@ if ($status === false) {
     exit('ErrorMessage:' . $error[2]);
 } else {
     //５．リダイレクト（ログインページへ）
-    redirect('event/event_list.php');
+    redirect('../career_regist/index.php');
 }
