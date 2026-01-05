@@ -11,7 +11,7 @@ require_once __DIR__ . '/../event/func.php';
 
 // DB接続
 try {
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8mb4;host=localhost', 'root', '');
 } catch (PDOException $e) {
     exit('DBConnectError' . $e->getMessage());
 }
@@ -114,8 +114,10 @@ try {
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
-                $insert = "INSERT INTO career_answers (session_id, user_id, strengths, created_at, updated_at)
-                            VALUES (:sid, :uid, :strengths, NOW(), NOW())";
+                $insert = "INSERT INTO 
+                                career_answers (session_id, user_id, strengths, created_at, updated_at)
+                            VALUES 
+                                (:sid, :uid, :strengths, NOW(), NOW())";
                 $stmt = $pdo->prepare($insert);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
@@ -160,7 +162,7 @@ try {
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q9 / 強み</div>
+        <div class="qno">Q8 / 強み</div>
         <h1>あなたの「強み」や「得意なこと」は何だと思いますか？</h1>
         <p class="desc">
             自己評価でOKです。<br>

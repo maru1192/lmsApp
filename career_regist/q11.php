@@ -11,7 +11,7 @@ require_once __DIR__ . '/../event/func.php';
 
 // DB接続
 try {
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8mb4;host=localhost', 'root', '');
 } catch (PDOException $e) {
     exit('DBConnectError' . $e->getMessage());
 }
@@ -188,7 +188,7 @@ try {
             $pdo->commit();
 
             // 完了ページへリダイレクト（仮にhome.phpとする）
-            header('Location: ../home.php');
+            header('Location: q12.php');
             exit;
         }
     }
@@ -267,27 +267,27 @@ try {
 
             <div class="future-item">
                 <label>仕事</label>
-                <textarea name="future_3y_work" placeholder="例）Webマーケターとして独立／新規事業の責任者になっている"><?= h($future3y['work']) ?></textarea>
+                <textarea name="future_3y_work" placeholder="例）"><?= h($future3y['work']) ?></textarea>
             </div>
 
             <div class="future-item">
                 <label>お金</label>
-                <textarea name="future_3y_money" placeholder="例）年収800万円／副業で月10万円稼ぐ"><?= h($future3y['money']) ?></textarea>
+                <textarea name="future_3y_money" placeholder="例）"><?= h($future3y['money']) ?></textarea>
             </div>
 
             <div class="future-item">
                 <label>生活・環境</label>
-                <textarea name="future_3y_life" placeholder="例）地方に移住して在宅勤務／都心のオフィスで働く"><?= h($future3y['life']) ?></textarea>
+                <textarea name="future_3y_life" placeholder="例）"><?= h($future3y['life']) ?></textarea>
             </div>
 
             <div class="future-item">
                 <label>人間関係</label>
-                <textarea name="future_3y_relationship" placeholder="例）同じ志を持つ仲間と協働／家族との時間を大切にしている"><?= h($future3y['relationship']) ?></textarea>
+                <textarea name="future_3y_relationship" placeholder="例）"><?= h($future3y['relationship']) ?></textarea>
             </div>
 
             <div class="future-item">
                 <label>健康・メンタル（心）</label>
-                <textarea name="future_3y_health" placeholder="例）運動習慣が身についている／ストレスなく働けている"><?= h($future3y['health']) ?></textarea>
+                <textarea name="future_3y_health" placeholder="例）"><?= h($future3y['health']) ?></textarea>
             </div>
 
             <div class="arrow-down">↓</div>
@@ -297,27 +297,27 @@ try {
 
             <div class="future-item">
                 <label>仕事</label>
-                <textarea name="future_1y_work" placeholder="例）マーケティングの実績を作る／新しいスキルを習得している"><?= h($future1y['work']) ?></textarea>
+                <textarea name="future_1y_work" placeholder="例）"><?= h($future1y['work']) ?></textarea>
             </div>
 
             <div class="future-item">
                 <label>お金</label>
-                <textarea name="future_1y_money" placeholder="例）年収600万円／副業で月3万円稼ぐ"><?= h($future1y['money']) ?></textarea>
+                <textarea name="future_1y_money" placeholder="例）"><?= h($future1y['money']) ?></textarea>
             </div>
 
             <div class="future-item">
                 <label>生活・環境</label>
-                <textarea name="future_1y_life" placeholder="例）リモートワーク中心の働き方に移行／引っ越しの準備を始める"><?= h($future1y['life']) ?></textarea>
+                <textarea name="future_1y_life" placeholder="例）"><?= h($future1y['life']) ?></textarea>
             </div>
 
             <div class="future-item">
                 <label>人間関係</label>
-                <textarea name="future_1y_relationship" placeholder="例）社外の人脈を広げる／家族と過ごす時間を増やす"><?= h($future1y['relationship']) ?></textarea>
+                <textarea name="future_1y_relationship" placeholder="例）"><?= h($future1y['relationship']) ?></textarea>
             </div>
 
             <div class="future-item">
                 <label>健康・メンタル（心）</label>
-                <textarea name="future_1y_health" placeholder="例）週2回の運動を習慣化／睡眠時間を確保できている"><?= h($future1y['health']) ?></textarea>
+                <textarea name="future_1y_health" placeholder="例）"><?= h($future1y['health']) ?></textarea>
             </div>
 
             <div class="hint" style="margin-top: 20px;">

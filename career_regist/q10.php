@@ -11,7 +11,7 @@ require_once __DIR__ . '/../event/func.php';
 
 // DB接続
 try {
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8mb4;host=localhost', 'root', '');
 } catch (PDOException $e) {
     exit('DBConnectError' . $e->getMessage());
 }
@@ -109,7 +109,7 @@ foreach ($optionsGrouped as $items) {
 
 try {
     // 既存回答（途中再開用）
-    $sql = "SELECT id, values_not_want
+    $sql = "SELECT id, failure_patterns, failure_patterns_note
             FROM career_answers
             WHERE session_id = :sid AND user_id = :uid
             ORDER BY id DESC
@@ -120,21 +120,16 @@ try {
     $stmt->execute();
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // 既存の保存形式：「パターンA,パターンB / 補足：xxx」を想定して復元
-    if ($existing && !empty($existing['values_not_want'])) {
-        $raw = (string)$existing['values_not_want'];
-
-        $note = '';
-        $parts = explode('/ 補足：', $raw, 2);
-        $listPart = trim($parts[0]);
-        if (count($parts) === 2) {
-            $note = trim($parts[1]);
+    // 既存の回答を復元
+    if ($existing) {
+        // 選択肢の復元（カンマ区切り）
+        if (!empty($existing['failure_patterns'])) {
+            $selectedPatterns = array_map('trim', explode(',', $existing['failure_patterns']));
         }
-
-        if ($listPart !== '') {
-            $selectedPatterns = array_map('trim', explode(',', $listPart));
+        // 補足の復元（専用カラムから）
+        if (!empty($existing['failure_patterns_note'])) {
+            $motivationNote = (string)$existing['failure_patterns_note'];
         }
-        $motivationNote = $note;
     }
 
     // POST：保存して次へ
@@ -165,35 +160,33 @@ try {
         } else {
             $pdo->beginTransaction();
 
-            // カンマ区切り + 補足で保存
-            $patternsValue = implode(',', $selectedPatterns);
-            if ($motivationNote !== '') {
-                $finalValue = $patternsValue . ' / 補足：' . $motivationNote;
-            } else {
-                $finalValue = $patternsValue;
-            }
+            // 選択肢はCSV、補足は別カラムに保存
+            $patternsValue = count($selectedPatterns) > 0 ? implode(',', $selectedPatterns) : '';
 
             // career_answers があるなら UPDATE、なければ INSERT
             if ($existing) {
                 $update = "UPDATE career_answers
-                            SET values_not_want = :values_not_want,
+                            SET failure_patterns = :failure_patterns,
+                                failure_patterns_note = :failure_patterns_note,
                                 updated_at = NOW()
                             WHERE id = :id AND session_id = :sid AND user_id = :uid";
                 $stmt = $pdo->prepare($update);
-                $stmt->bindValue(':values_not_want', $finalValue, PDO::PARAM_STR);
+                $stmt->bindValue(':failure_patterns', $patternsValue, PDO::PARAM_STR);
+                $stmt->bindValue(':failure_patterns_note', $motivationNote, PDO::PARAM_STR);
                 $stmt->bindValue(':id', (int)$existing['id'], PDO::PARAM_INT);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
                 $insert = "INSERT INTO 
-                                career_answers (session_id, user_id, values_not_want, created_at, updated_at)
+                                career_answers (session_id, user_id, failure_patterns, failure_patterns_note, created_at, updated_at)
                             VALUES 
-                                (:sid, :uid, :values_not_want, NOW(), NOW())";
+                                (:sid, :uid, :failure_patterns, :failure_patterns_note, NOW(), NOW())";
                 $stmt = $pdo->prepare($insert);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
-                $stmt->bindValue(':values_not_want', $finalValue, PDO::PARAM_STR);
+                $stmt->bindValue(':failure_patterns', $patternsValue, PDO::PARAM_STR);
+                $stmt->bindValue(':failure_patterns_note', $motivationNote, PDO::PARAM_STR);
                 $stmt->execute();
             }
 
@@ -211,7 +204,7 @@ try {
 
             $pdo->commit();
 
-            header('Location: thanks.php');
+            header('Location: q11.php');
             exit;
         }
     }
@@ -225,7 +218,7 @@ try {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>アンケート - Q11</title>
+    <title>アンケート - Q10</title>
     <link rel="stylesheet" href="css/style.css" />
     <style>
         textarea {
@@ -240,7 +233,7 @@ try {
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q11 / 挫折パターン</div>
+        <div class="qno">Q10 / 挫折パターン</div>
         <h1>過去に挫折したパターンを教えてください</h1>
         <p class="desc">
             自分の「うまくいかないパターン」を知ると、無理のない学習設計ができます。<br>

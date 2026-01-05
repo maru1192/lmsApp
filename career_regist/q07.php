@@ -11,7 +11,7 @@ require_once __DIR__ . '/../event/func.php';
 
 // DB接続
 try {
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8mb4;host=localhost', 'root', '');
 } catch (PDOException $e) {
     exit('DBConnectError' . $e->getMessage());
 }
@@ -160,7 +160,7 @@ try {
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q8 / キャリア</div>
+        <div class="qno">Q7 / キャリア</div>
         <h1>これまでの仕事で「やりがいを感じた瞬間」「成果を出した瞬間」は何ですか？</h1>
         <p class="desc">
             「頑張ったこと」「工夫したこと」「人に喜ばれたこと」など、あなたの強みのヒントになります。

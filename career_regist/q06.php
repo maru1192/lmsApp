@@ -11,7 +11,7 @@ require_once __DIR__ . '/../event/func.php';
 
 // DB接続
 try {
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8mb4;host=localhost', 'root', '');
 } catch (PDOException $e) {
     exit('DBConnectError' . $e->getMessage());
 }
@@ -133,7 +133,7 @@ foreach ($optionsGrouped as $items) {
 
 try {
     // 既存回答（途中再開用）
-    $sql = "SELECT id, values_not_want
+    $sql = "SELECT id, values_not_want, job_stress_note
             FROM career_answers
             WHERE session_id = :sid AND user_id = :uid
             ORDER BY id DESC
@@ -144,22 +144,17 @@ try {
     $stmt->execute();
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // 既存の回答を復元（形式：「選択肢1,選択肢2 / 補足：xxx」）
-    if ($existing && !empty($existing['values_not_want'])) {
-        $raw = (string)$existing['values_not_want'];
-        
-        $note = '';
-        $parts = explode(' / 補足：', $raw, 2);
-        $listPart = trim($parts[0]);
-        if (count($parts) === 2) {
-            $note = trim($parts[1]);
-        }
-
-        if ($listPart !== '') {
-            $tmp = array_map('trim', explode(',', $listPart));
+    // 既存の回答を復元
+    if ($existing) {
+        // 選択肢の復元（カンマ区切り）
+        if (!empty($existing['values_not_want'])) {
+            $tmp = array_map('trim', explode(',', $existing['values_not_want']));
             $selectedValues = array_values(array_filter($tmp, fn($v) => $v !== ''));
         }
-        $jobStressNote = $note;
+        // 補足の復元（専用カラムから）
+        if (!empty($existing['job_stress_note'])) {
+            $jobStressNote = (string)$existing['job_stress_note'];
+        }
     }
 
     // POST：保存して次へ
@@ -184,39 +179,34 @@ try {
         if (count($selectedValues) === 0 && $jobStressNote === '') {
             $error = '選択肢を選ぶか、補足欄に記入してください。';
         } else {
-            // DB保存用（CSV + 補足）
-            $saveText = '';
-            if (count($selectedValues) > 0) {
-                $saveText = implode(',', $selectedValues);
-            }
-            if ($jobStressNote !== '') {
-                if ($saveText !== '') {
-                    $saveText .= ' / 補足：' . $jobStressNote;
-                } else {
-                    $saveText = '補足：' . $jobStressNote;
-                }
-            }
+            // DB保存用（選択肢はCSV、補足は別カラム）
+            $valuesText = count($selectedValues) > 0 ? implode(',', $selectedValues) : '';
 
             $pdo->beginTransaction();
 
             if ($existing) {
                 $update = "UPDATE career_answers
                             SET values_not_want = :values_not_want,
+                                job_stress_note = :job_stress_note,
                                 updated_at = NOW()
                             WHERE id = :id AND session_id = :sid AND user_id = :uid";
                 $stmt = $pdo->prepare($update);
-                $stmt->bindValue(':values_not_want', $saveText, PDO::PARAM_STR);
+                $stmt->bindValue(':values_not_want', $valuesText, PDO::PARAM_STR);
+                $stmt->bindValue(':job_stress_note', $jobStressNote, PDO::PARAM_STR);
                 $stmt->bindValue(':id', (int)$existing['id'], PDO::PARAM_INT);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
-                $insert = "INSERT INTO career_answers (session_id, user_id, values_not_want, created_at, updated_at)
-                            VALUES (:sid, :uid, :values_not_want, NOW(), NOW())";
+                $insert = "INSERT INTO 
+                                career_answers (session_id, user_id, values_not_want, job_stress_note, created_at, updated_at)
+                            VALUES 
+                                (:sid, :uid, :values_not_want, :job_stress_note, NOW(), NOW())";
                 $stmt = $pdo->prepare($insert);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
-                $stmt->bindValue(':values_not_want', $saveText, PDO::PARAM_STR);
+                $stmt->bindValue(':values_not_want', $valuesText, PDO::PARAM_STR);
+                $stmt->bindValue(':job_stress_note', $jobStressNote, PDO::PARAM_STR);
                 $stmt->execute();
             }
 
@@ -246,13 +236,13 @@ try {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>アンケート - Q7</title>
+    <title>アンケート - Q6</title>
     <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q7 / 今の仕事</div>
+        <div class="qno">Q6 / 今の仕事</div>
         <h1>今の仕事で「しんどい／モヤモヤする」ことは何かありますか？<br>（複数選択可）</h1>
         <p class="desc">
             あなたの価値観に合っていない「避けたい状況」を選んでください。<br>

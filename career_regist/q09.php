@@ -11,7 +11,7 @@ require_once __DIR__ . '/../event/func.php';
 
 // DB接続
 try {
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8mb4;host=localhost', 'root', '');
 } catch (PDOException $e) {
     exit('DBConnectError' . $e->getMessage());
 }
@@ -95,7 +95,7 @@ $options = [
 
 try {
     // 既存回答（途中再開用）
-    $sql = "SELECT id, values_important
+    $sql = "SELECT id, core_values, core_values_note
             FROM career_answers
             WHERE session_id = :sid AND user_id = :uid
             ORDER BY id DESC
@@ -106,21 +106,16 @@ try {
     $stmt->execute();
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // 既存の保存形式：「価値観A,価値観B / 補足：xxx」を想定して復元
-    if ($existing && !empty($existing['values_important'])) {
-        $raw = (string)$existing['values_important'];
-
-        $note = '';
-        $parts = explode('/ 補足：', $raw, 2);
-        $listPart = trim($parts[0]);
-        if (count($parts) === 2) {
-            $note = trim($parts[1]);
+    // 既存の回答を復元
+    if ($existing) {
+        // 選択肢の復元（カンマ区切り）
+        if (!empty($existing['core_values'])) {
+            $selectedValues = array_map('trim', explode(',', $existing['core_values']));
         }
-
-        if ($listPart !== '') {
-            $selectedValues = array_map('trim', explode(',', $listPart));
+        // 補足の復元（専用カラムから）
+        if (!empty($existing['core_values_note'])) {
+            $valuesNote = (string)$existing['core_values_note'];
         }
-        $valuesNote = $note;
     }
 
     // POST：保存して次へ
@@ -151,33 +146,33 @@ try {
         } else {
             $pdo->beginTransaction();
 
-            // カンマ区切り + 補足で保存
-            $valuesValue = implode(',', $selectedValues);
-            if ($valuesNote !== '') {
-                $finalValue = $valuesValue . ' / 補足：' . $valuesNote;
-            } else {
-                $finalValue = $valuesValue;
-            }
+            // 選択肢はCSV、補足は別カラムに保存
+            $valuesValue = count($selectedValues) > 0 ? implode(',', $selectedValues) : '';
 
             // career_answers があるなら UPDATE、なければ INSERT
             if ($existing) {
                 $update = "UPDATE career_answers
-                            SET values_important = :values_important,
+                            SET core_values = :core_values,
+                                core_values_note = :core_values_note,
                                 updated_at = NOW()
                             WHERE id = :id AND session_id = :sid AND user_id = :uid";
                 $stmt = $pdo->prepare($update);
-                $stmt->bindValue(':values_important', $finalValue, PDO::PARAM_STR);
+                $stmt->bindValue(':core_values', $valuesValue, PDO::PARAM_STR);
+                $stmt->bindValue(':core_values_note', $valuesNote, PDO::PARAM_STR);
                 $stmt->bindValue(':id', (int)$existing['id'], PDO::PARAM_INT);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
-                $insert = "INSERT INTO career_answers (session_id, user_id, values_important, created_at, updated_at)
-                            VALUES (:sid, :uid, :values_important, NOW(), NOW())";
+                $insert = "INSERT INTO 
+                                career_answers (session_id, user_id, core_values, core_values_note, created_at, updated_at)
+                            VALUES 
+                                (:sid, :uid, :core_values, :core_values_note, NOW(), NOW())";
                 $stmt = $pdo->prepare($insert);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
-                $stmt->bindValue(':values_important', $finalValue, PDO::PARAM_STR);
+                $stmt->bindValue(':core_values', $valuesValue, PDO::PARAM_STR);
+                $stmt->bindValue(':core_values_note', $valuesNote, PDO::PARAM_STR);
                 $stmt->execute();
             }
 
@@ -225,7 +220,7 @@ try {
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q10 / 価値観</div>
+        <div class="qno">Q9 / 価値観</div>
         <h1>あなたが「大事にしたい価値観」は何ですか？</h1>
         <p class="desc">
             学習を続けるための軸になる価値観を明確にします。<br>

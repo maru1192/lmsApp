@@ -11,7 +11,7 @@ require_once __DIR__ . '/../event/func.php';
 
 // DB接続
 try {
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8mb4;host=localhost', 'root', '');
 } catch (PDOException $e) {
     exit('DBConnectError' . $e->getMessage());
 }
@@ -64,11 +64,11 @@ if (empty($_SESSION['csrf_token'])) {
 $csrfToken = $_SESSION['csrf_token'];
 
 $error = '';
-$proudAchievement = '';
+$jobHistory = '';
 
 try {
     // 既存回答（途中再開用）
-    $sql = "SELECT id, proud_achievement
+    $sql = "SELECT id, job_history
             FROM career_answers
             WHERE session_id = :sid AND user_id = :uid
             ORDER BY id DESC
@@ -79,8 +79,8 @@ try {
     $stmt->execute();
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($existing && !empty($existing['proud_achievement'])) {
-        $proudAchievement = (string)$existing['proud_achievement'];
+    if ($existing && !empty($existing['job_history'])) {
+        $jobHistory = (string)$existing['job_history'];
     }
 
     // POST：保存して次へ
@@ -91,10 +91,10 @@ try {
             exit('Invalid CSRF token');
         }
 
-        $proudAchievement = trim((string)($_POST['proud_achievement'] ?? ''));
+        $jobHistory = trim((string)($_POST['job_history'] ?? ''));
 
         // バリデーション（必須）
-        if ($proudAchievement === '') {
+        if ($jobHistory === '') {
             $error = '入力してください。';
         } else {
             $pdo->beginTransaction();
@@ -102,22 +102,24 @@ try {
             // career_answers があるなら UPDATE、なければ INSERT
             if ($existing) {
                 $update = "UPDATE career_answers
-                            SET proud_achievement = :proud_achievement,
+                            SET job_history = :job_history,
                                 updated_at = NOW()
                             WHERE id = :id AND session_id = :sid AND user_id = :uid";
                 $stmt = $pdo->prepare($update);
-                $stmt->bindValue(':proud_achievement', $proudAchievement, PDO::PARAM_STR);
+                $stmt->bindValue(':job_history', $jobHistory, PDO::PARAM_STR);
                 $stmt->bindValue(':id', (int)$existing['id'], PDO::PARAM_INT);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
-                $insert = "INSERT INTO career_answers (session_id, user_id, proud_achievement, created_at, updated_at)
-                            VALUES (:sid, :uid, :proud_achievement, NOW(), NOW())";
+                $insert = "INSERT INTO 
+                                career_answers (session_id, user_id, job_history, created_at, updated_at)
+                            VALUES
+                                (:sid, :uid, :job_history, NOW(), NOW())";
                 $stmt = $pdo->prepare($insert);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
-                $stmt->bindValue(':proud_achievement', $proudAchievement, PDO::PARAM_STR);
+                $stmt->bindValue(':job_history', $jobHistory, PDO::PARAM_STR);
                 $stmt->execute();
             }
 
@@ -168,7 +170,7 @@ try {
 
             <div class="field">
                 <span class="label">キャリアの流れ</span>
-                <textarea name="proud_achievement" required><?= h($proudAchievement) ?></textarea>
+                <textarea name="job_history" required><?= h($jobHistory) ?></textarea>
                 <div class="hint">
                     書きやすい型（任意）：
                     <ul>

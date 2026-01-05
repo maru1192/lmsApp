@@ -11,7 +11,7 @@ require_once __DIR__ . '/../event/func.php';
 
 // DB接続
 try {
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8mb4;host=localhost', 'root', '');
 } catch (PDOException $e) {
     exit('DBConnectError' . $e->getMessage());
 }
@@ -162,7 +162,7 @@ try {
             $pdo->commit();
 
             // 完了ページへリダイレクト
-            header('Location: ../home.php');
+            header('Location: q13.php');
             exit;
         }
     }
@@ -254,28 +254,28 @@ try {
                 <!-- 収入 -->
                 <div class="goal-item">
                     <label>💰 収入</label>
-                    <textarea name="income" placeholder="例）副業で月5万円稼ぐ／年収が50万円アップしている"><?= h($halfYearGoals['income']) ?></textarea>
+                    <textarea name="income" placeholder="例）"><?= h($halfYearGoals['income']) ?></textarea>
                     <div class="goal-hint">半年後に達成したい収入目標を書いてください</div>
                 </div>
 
                 <!-- 実績 -->
                 <div class="goal-item">
                     <label>📊 実績</label>
-                    <textarea name="achievement" placeholder="例）案件を3つ完了している／プロジェクトリーダーを経験している"><?= h($halfYearGoals['achievement']) ?></textarea>
+                    <textarea name="achievement" placeholder="例）"><?= h($halfYearGoals['achievement']) ?></textarea>
                     <div class="goal-hint">収入を得るために必要な実績・成果を書いてください</div>
                 </div>
 
                 <!-- スキル -->
                 <div class="goal-item">
                     <label>🎓 スキル</label>
-                    <textarea name="skill" placeholder="例）Webマーケティングの基礎を習得／Python でデータ分析ができる"><?= h($halfYearGoals['skill']) ?></textarea>
+                    <textarea name="skill" placeholder="例）"><?= h($halfYearGoals['skill']) ?></textarea>
                     <div class="goal-hint">実績を作るために必要なスキルを書いてください</div>
                 </div>
 
                 <!-- 習慣 -->
                 <div class="goal-item">
                     <label>⏰ 習慣（週○時間）</label>
-                    <textarea name="habit" placeholder="例）週10時間の学習習慣／毎朝1時間勉強する"><?= h($halfYearGoals['habit']) ?></textarea>
+                    <textarea name="habit" placeholder="例）"><?= h($halfYearGoals['habit']) ?></textarea>
                     <div class="goal-hint">スキルを身につけるために必要な学習習慣を書いてください</div>
                 </div>
             </div>

@@ -163,7 +163,6 @@
 }
 
 .answer-text.long-text {
-    white-space: pre-wrap;
     word-wrap: break-word;
 }
 
@@ -237,4 +236,139 @@
     .empty-state i {
         font-size: 48px;
     }
+
+    .answer-tags {
+        gap: 6px;
+    }
+
+    .tag {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+}
+
+/* タグ表示 */
+.answer-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    margin-bottom: 12px;
+}
+
+.tag {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.tag-positive {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.tag-negative {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.tag-value {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.tag-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.tag-obstacle {
+    background: #f3e8ff;
+    color: #6b21a8;
+}
+
+/* 時間帯表示 */
+.time-slot-item {
+    padding: 8px 0;
+    font-size: 15px;
+    color: #374151;
+}
+
+.time-slot-item strong {
+    color: #111827;
+    font-weight: 700;
+}
+
+/* ビジョン表示 */
+.vision-block {
+    margin-bottom: 24px;
+}
+
+.vision-block:last-child {
+    margin-bottom: 0;
+}
+
+.vision-label {
+    font-size: 16px;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #f1b24d;
+}
+
+.vision-item {
+    padding: 10px 16px;
+    background: #f9fafb;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    color: #374151;
+}
+
+.vision-item strong {
+    color: #111827;
+    font-weight: 700;
+}
+
+/* ゴール表示（逆算） */
+.goals-cascade {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.goal-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 10px;
+    border-left: 4px solid #f1b24d;
+}
+
+.goal-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.goal-content {
+    flex: 1;
+}
+
+.goal-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6b7280;
+    margin-bottom: 6px;
+}
+
+.goal-text {
+    font-size: 15px;
+    color: #111827;
+    line-height: 1.6;
 }

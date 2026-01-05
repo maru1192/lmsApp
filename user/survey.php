@@ -18,7 +18,7 @@ if (!$userId) {
 
 // DB接続
 try {
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8mb4;host=localhost', 'root', '');
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     exit('DBConnectError:' . $e->getMessage());
@@ -98,23 +98,46 @@ require_once APP_ROOT . '/parts/layout_start.php';
     <div class="content-card">
         <div class="survey-sections">
             
-            <!-- Q1: 雇用状況 -->
+            <!-- Q1: 雇用状況・就業時間 -->
             <?php if (!empty($survey['employment_status'])): ?>
                 <div class="survey-section">
                     <div class="question-number">Q1</div>
                     <div class="question-content">
-                        <h3 class="question-title">現在の雇用状況</h3>
+                        <h3 class="question-title">現在の雇用状況・就業時間</h3>
+                        <div class="answer-label">雇用形態:</div>
                         <div class="answer-text">
                             <?= h($employmentOptions[$survey['employment_status']] ?? $survey['employment_status']) ?>
                         </div>
+                        
+                        <?php if (!empty($survey['work_start_time']) && !empty($survey['work_end_time'])): ?>
+                            <div class="answer-label">勤務時間:</div>
+                            <div class="answer-text">
+                                <?= h(substr($survey['work_start_time'], 0, 5)) ?> 〜 <?= h(substr($survey['work_end_time'], 0, 5)) ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <?php if (!empty($survey['work_days'])): ?>
+                            <div class="answer-label">勤務曜日:</div>
+                            <div class="answer-text"><?= h($survey['work_days']) ?></div>
+                        <?php endif; ?>
+                        
+                        <?php if (isset($survey['overtime_hours_month'])): ?>
+                            <div class="answer-label">月間残業時間:</div>
+                            <div class="answer-text"><?= h($survey['overtime_hours_month']) ?> 時間</div>
+                        <?php endif; ?>
+                        
+                        <?php if (isset($survey['weekend_work_count'])): ?>
+                            <div class="answer-label">月間休日出勤:</div>
+                            <div class="answer-text"><?= h($survey['weekend_work_count']) ?> 回</div>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endif; ?>
 
-            <!-- Q3: 職種・業界 -->
+            <!-- Q2: 職種・業界 -->
             <?php if (!empty($survey['current_job_role']) || !empty($survey['industry'])): ?>
                 <div class="survey-section">
-                    <div class="question-number">Q3</div>
+                    <div class="question-number">Q2</div>
                     <div class="question-content">
                         <h3 class="question-title">現在の職種・業界</h3>
                         <?php if (!empty($survey['current_job_role'])): ?>
@@ -129,12 +152,104 @@ require_once APP_ROOT . '/parts/layout_start.php';
                 </div>
             <?php endif; ?>
 
-            <!-- Q4: 誇れる実績 -->
-            <?php if (!empty($survey['proud_achievement'])): ?>
+            <!-- Q3: 学習可能時間帯 -->
+            <?php if (!empty($survey['study_time_slots'])): ?>
+                <div class="survey-section">
+                    <div class="question-number">Q3</div>
+                    <div class="question-content">
+                        <h3 class="question-title">学習に使える時間帯</h3>
+                        <div class="answer-text">
+                            <?php
+                            $slots = json_decode($survey['study_time_slots'], true);
+                            if ($slots && is_array($slots)) {
+                                foreach ($slots as $day => $times) {
+                                    if (!empty($times)) {
+                                        echo '<div class="time-slot-item">';
+                                        echo '<strong>' . h($day) . ':</strong> ';
+                                        echo h(implode(', ', $times));
+                                        echo '</div>';
+                                    }
+                                }
+                            } else {
+                                echo h($survey['study_time_slots']);
+                            }
+                            ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Q4: キャリアの流れ -->
+            <?php if (!empty($survey['job_history'])): ?>
                 <div class="survey-section">
                     <div class="question-number">Q4</div>
                     <div class="question-content">
-                        <h3 class="question-title">これまでの仕事で一番誇れる成果</h3>
+                        <h3 class="question-title">これまでのキャリアの全体像</h3>
+                        <div class="answer-text long-text">
+                            <?= nl2br(h($survey['job_history'])) ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Q5: 好き/続けたい要素 -->
+            <?php if (!empty($survey['values_important'])): ?>
+                <div class="survey-section">
+                    <div class="question-number">Q5</div>
+                    <div class="question-content">
+                        <h3 class="question-title">今の仕事で「好き／続けたい」要素</h3>
+                        <div class="answer-tags">
+                            <?php
+                            // 「選択肢 / 補足：xxx」形式から選択肢を取り出す
+                            $parts = explode(' / 補足：', $survey['values_important']);
+                            $values = array_map('trim', explode(',', $parts[0]));
+                            foreach ($values as $value) {
+                                if ($value !== '') {
+                                    echo '<span class="tag tag-positive">' . h($value) . '</span>';
+                                }
+                            }
+                            ?>
+                        </div>
+                        <?php if (isset($parts[1]) && $parts[1] !== ''): ?>
+                            <div class="answer-label">補足:</div>
+                            <div class="answer-text"><?= nl2br(h($parts[1])) ?></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Q6: しんどい/モヤモヤすること -->
+            <?php if (!empty($survey['values_not_want']) || !empty($survey['job_stress_note'])): ?>
+                <div class="survey-section">
+                    <div class="question-number">Q6</div>
+                    <div class="question-content">
+                        <h3 class="question-title">今の仕事で「しんどい／モヤモヤする」こと</h3>
+                        <?php if (!empty($survey['values_not_want'])): ?>
+                            <div class="answer-tags">
+                                <?php
+                                $values = array_map('trim', explode(',', $survey['values_not_want']));
+                                foreach ($values as $value) {
+                                    if ($value !== '') {
+                                        echo '<span class="tag tag-negative">' . h($value) . '</span>';
+                                    }
+                                }
+                                ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!empty($survey['job_stress_note'])): ?>
+                            <div class="answer-label">補足:</div>
+                            <div class="answer-text"><?= nl2br(h($survey['job_stress_note'])) ?></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Q7: やりがいを感じた瞬間 -->
+            <?php if (!empty($survey['proud_achievement'])): ?>
+                <div class="survey-section">
+                    <div class="question-number">Q7</div>
+                    <div class="question-content">
+                        <h3 class="question-title">これまでの仕事で「やりがいを感じた瞬間」「成果を出した瞬間」</h3>
                         <div class="answer-text long-text">
                             <?= nl2br(h($survey['proud_achievement'])) ?>
                         </div>
@@ -142,10 +257,10 @@ require_once APP_ROOT . '/parts/layout_start.php';
                 </div>
             <?php endif; ?>
 
-            <!-- Q5: 強み -->
+            <!-- Q8: 強み -->
             <?php if (!empty($survey['strengths'])): ?>
                 <div class="survey-section">
-                    <div class="question-number">Q5</div>
+                    <div class="question-number">Q8</div>
                     <div class="question-content">
                         <h3 class="question-title">あなたの強みや得意なこと</h3>
                         <div class="answer-text long-text">
@@ -155,27 +270,173 @@ require_once APP_ROOT . '/parts/layout_start.php';
                 </div>
             <?php endif; ?>
 
-            <!-- Q6: 大切にしたい価値観 -->
-            <?php if (!empty($survey['values_important'])): ?>
+            <!-- Q9: 大事にしたい価値観 -->
+            <?php if (!empty($survey['core_values']) || !empty($survey['core_values_note'])): ?>
                 <div class="survey-section">
-                    <div class="question-number">Q6</div>
+                    <div class="question-number">Q9</div>
                     <div class="question-content">
-                        <h3 class="question-title">あなたが大事にしたい価値観</h3>
-                        <div class="answer-text long-text">
-                            <?= nl2br(h($survey['values_important'])) ?>
-                        </div>
+                        <h3 class="question-title">あなたが「大事にしたい価値観」</h3>
+                        <?php if (!empty($survey['core_values'])): ?>
+                            <div class="answer-tags">
+                                <?php
+                                $values = array_map('trim', explode(',', $survey['core_values']));
+                                foreach ($values as $value) {
+                                    if ($value !== '') {
+                                        echo '<span class="tag tag-value">' . h($value) . '</span>';
+                                    }
+                                }
+                                ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!empty($survey['core_values_note'])): ?>
+                            <div class="answer-label">補足:</div>
+                            <div class="answer-text"><?= nl2br(h($survey['core_values_note'])) ?></div>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endif; ?>
 
-            <!-- Q7: 避けたい価値観 -->
-            <?php if (!empty($survey['values_not_want'])): ?>
+            <!-- Q10: 挫折パターン -->
+            <?php if (!empty($survey['failure_patterns']) || !empty($survey['failure_patterns_note'])): ?>
                 <div class="survey-section">
-                    <div class="question-number">Q7</div>
+                    <div class="question-number">Q10</div>
                     <div class="question-content">
-                        <h3 class="question-title">あなたが絶対に避けたいこと／やりたくないこと</h3>
-                        <div class="answer-text long-text">
-                            <?= nl2br(h($survey['values_not_want'])) ?>
+                        <h3 class="question-title">過去に挫折したパターン</h3>
+                        <?php if (!empty($survey['failure_patterns'])): ?>
+                            <div class="answer-tags">
+                                <?php
+                                $patterns = array_map('trim', explode(',', $survey['failure_patterns']));
+                                foreach ($patterns as $pattern) {
+                                    if ($pattern !== '') {
+                                        echo '<span class="tag tag-warning">' . h($pattern) . '</span>';
+                                    }
+                                }
+                                ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!empty($survey['failure_patterns_note'])): ?>
+                            <div class="answer-label">補足:</div>
+                            <div class="answer-text"><?= nl2br(h($survey['failure_patterns_note'])) ?></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Q11: 未来のビジョン -->
+            <?php if (!empty($survey['future_vision'])): ?>
+                <div class="survey-section">
+                    <div class="question-number">Q11</div>
+                    <div class="question-content">
+                        <h3 class="question-title">未来のビジョン（3年後・1年後）</h3>
+                        <?php
+                        $vision = json_decode($survey['future_vision'], true);
+                        if ($vision && is_array($vision)):
+                        ?>
+                            <?php if (!empty($vision['3y'])): ?>
+                                <div class="vision-block">
+                                    <div class="vision-label">3年後の姿:</div>
+                                    <?php foreach ($vision['3y'] as $key => $value): ?>
+                                        <?php if (!empty($value)): ?>
+                                            <div class="vision-item">
+                                                <strong><?= h($key) ?>:</strong> <?= h($value) ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($vision['1y'])): ?>
+                                <div class="vision-block">
+                                    <div class="vision-label">1年後の姿:</div>
+                                    <?php foreach ($vision['1y'] as $key => $value): ?>
+                                        <?php if (!empty($value)): ?>
+                                            <div class="vision-item">
+                                                <strong><?= h($key) ?>:</strong> <?= h($value) ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <div class="answer-text"><?= nl2br(h($survey['future_vision'])) ?></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Q12: 半年後のゴール -->
+            <?php if (!empty($survey['half_year_goals'])): ?>
+                <div class="survey-section">
+                    <div class="question-number">Q12</div>
+                    <div class="question-content">
+                        <h3 class="question-title">半年後のゴール（逆算設計）</h3>
+                        <?php
+                        $goals = json_decode($survey['half_year_goals'], true);
+                        if ($goals && is_array($goals)):
+                        ?>
+                            <div class="goals-cascade">
+                                <?php if (!empty($goals['income'])): ?>
+                                    <div class="goal-item">
+                                        <span class="goal-icon">💰</span>
+                                        <div class="goal-content">
+                                            <div class="goal-label">収入面のゴール</div>
+                                            <div class="goal-text"><?= h($goals['income']) ?></div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($goals['achievement'])): ?>
+                                    <div class="goal-item">
+                                        <span class="goal-icon">🎯</span>
+                                        <div class="goal-content">
+                                            <div class="goal-label">達成したいこと</div>
+                                            <div class="goal-text"><?= h($goals['achievement']) ?></div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($goals['skill'])): ?>
+                                    <div class="goal-item">
+                                        <span class="goal-icon">📚</span>
+                                        <div class="goal-content">
+                                            <div class="goal-label">身につけたいスキル</div>
+                                            <div class="goal-text"><?= h($goals['skill']) ?></div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($goals['habit'])): ?>
+                                    <div class="goal-item">
+                                        <span class="goal-icon">🔄</span>
+                                        <div class="goal-content">
+                                            <div class="goal-label">習慣化したいこと</div>
+                                            <div class="goal-text"><?= h($goals['habit']) ?></div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="answer-text"><?= nl2br(h($survey['half_year_goals'])) ?></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Q13: 学習の障害 -->
+            <?php if (!empty($survey['obstacles'])): ?>
+                <div class="survey-section">
+                    <div class="question-number">Q13</div>
+                    <div class="question-content">
+                        <h3 class="question-title">半年後ゴールに向けて「いま感じている不安」</h3>
+                        <div class="answer-tags">
+                            <?php
+                            $obstacles = array_map('trim', explode(',', $survey['obstacles']));
+                            foreach ($obstacles as $obstacle) {
+                                if ($obstacle !== '') {
+                                    echo '<span class="tag tag-obstacle">' . h($obstacle) . '</span>';
+                                }
+                            }
+                            ?>
                         </div>
                     </div>
                 </div>
