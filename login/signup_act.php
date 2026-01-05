@@ -23,12 +23,7 @@ if (empty($lastName) || empty($firstName) || empty($email) || empty($password)) 
 }
 
 //2. DB接続します
-try {
-    //ID:'root', Password: xamppは 空白 ''
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
-} catch (PDOException $e) {
-    exit('DBConnectError:' . $e->getMessage());
-}
+$pdo = db_conn();
 
 //３．データ登録SQL作成
 

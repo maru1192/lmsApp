@@ -5,7 +5,7 @@ require_once __DIR__ . '/../config.php';
 //1.  DB接続します
 try {
     //Password:MAMP='root',XAMPP=''
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+    $pdo = db_conn();
 } catch (PDOException $e) {
     exit('DBConnectError' . $e->getMessage());
 }

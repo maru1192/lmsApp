@@ -9,12 +9,7 @@ $lpw = $_POST['lpw'];   //lpw
 require_once __DIR__ . '/../event/func.php';
 
 //2. DB接続します
-try {
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost','root','');
-    } catch (PDOException $e) {
-    exit('DBConnectError:'.$e->getMessage());
-}
-
+$pdo = db_conn();
 //３．データ登録SQL作成
 //  ① SQL文を用意
 $stmt = $pdo->prepare("SELECT * FROM user_table WHERE lid = :lid AND life_flg = 1");

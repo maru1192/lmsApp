@@ -29,7 +29,7 @@ $mentor_consultation = $_POST['mentor_consultation'];
 
 //2. DB接続
 try {
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+    $pdo = db_conn();
 } catch (PDOException $e) {
     exit('DBConnectError:' . $e->getMessage());
 }

@@ -22,7 +22,7 @@ try {
 }
 
 // 2) DB接続（あなたのdb_conn()があるならそれでOK）
-$pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+$pdo = db_conn();
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 // 3) event typeで分岐

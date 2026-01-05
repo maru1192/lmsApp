@@ -66,7 +66,7 @@ if ($tmpRel !== '') {
 //2.  データベースに接続
 try {
     //ID:'root', Password: xamppは 空白 ''
-    $pdo = new PDO('mysql:dbname=learning_app;charset=utf8;host=localhost', 'root', '');
+    $pdo = db_conn();
 } catch (PDOException $e) {
     exit('DBConnectError:' . $e->getMessage());
 }

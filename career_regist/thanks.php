@@ -13,7 +13,7 @@ $userId = (int)$_SESSION['user_id'];
 $sid    = (int)($_SESSION['career_session_id'] ?? 0);
 if ($sid > 0) {
     try {
-        $pdo = new PDO('mysql:dbname=learning_app;charset=utf8mb4;host=localhost', 'root', '');
+        $pdo = db_conn();
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $stmt = $pdo->prepare("UPDATE career_sessions SET status='completed', updated_at=NOW() WHERE id=:sid AND user_id=:uid");
         $stmt->bindValue(':sid', $sid, PDO::PARAM_INT);
