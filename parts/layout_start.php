@@ -29,7 +29,7 @@ $NAV = [
         'label' => 'イベント',
         'items' => [
             ['key' => 'event_list',   'label' => 'イベント一覧',           'href' => APP_URL . '/event/event_list.php',      'icon' => 'far fa-list-alt'],
-            ['key' => 'event_join',   'label' => '参加イベント一覧', 'href' => APP_URL . '/event/event_join_list.php', 'icon' => 'far fa-check-circle'],
+            ['key' => 'event_join',   'label' => '参加イベント一覧', 'href' => APP_URL . '/event/applied.php', 'icon' => 'far fa-check-circle'],
             ['key' => 'event_create', 'label' => 'イベント登録',           'href' => APP_URL . '/event/form_append.php',     'icon' => 'far fa-plus-square'],
         ],
     ],

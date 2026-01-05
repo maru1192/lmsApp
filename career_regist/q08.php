@@ -64,11 +64,11 @@ if (empty($_SESSION['csrf_token'])) {
 $csrfToken = $_SESSION['csrf_token'];
 
 $error = '';
-$proudAchievement = '';
+$strengths = '';
 
 try {
     // 既存回答（途中再開用）
-    $sql = "SELECT id, proud_achievement
+    $sql = "SELECT id, strengths
             FROM career_answers
             WHERE session_id = :sid AND user_id = :uid
             ORDER BY id DESC
@@ -79,8 +79,8 @@ try {
     $stmt->execute();
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($existing && !empty($existing['proud_achievement'])) {
-        $proudAchievement = (string)$existing['proud_achievement'];
+    if ($existing && !empty($existing['strengths'])) {
+        $strengths = (string)$existing['strengths'];
     }
 
     // POST：保存して次へ
@@ -91,12 +91,12 @@ try {
             exit('Invalid CSRF token');
         }
 
-        $proudAchievement = trim((string)($_POST['proud_achievement'] ?? ''));
+        $strengths = trim((string)($_POST['strengths'] ?? ''));
 
-        // バリデーション（最低限）
-        if ($proudAchievement === '') {
+        // バリデーション
+        if ($strengths === '') {
             $error = '入力してください。';
-        } elseif (mb_strlen($proudAchievement) > 5000) {
+        } elseif (mb_strlen($strengths) > 5000) {
             $error = '長すぎます（5000文字以内）。';
         } else {
             $pdo->beginTransaction();
@@ -104,28 +104,28 @@ try {
             // career_answers があるなら UPDATE、なければ INSERT
             if ($existing) {
                 $update = "UPDATE career_answers
-                            SET proud_achievement = :proud_achievement,
+                            SET strengths = :strengths,
                                 updated_at = NOW()
                             WHERE id = :id AND session_id = :sid AND user_id = :uid";
                 $stmt = $pdo->prepare($update);
-                $stmt->bindValue(':proud_achievement', $proudAchievement, PDO::PARAM_STR);
+                $stmt->bindValue(':strengths', $strengths, PDO::PARAM_STR);
                 $stmt->bindValue(':id', (int)$existing['id'], PDO::PARAM_INT);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
-                $insert = "INSERT INTO career_answers (session_id, user_id, proud_achievement, created_at, updated_at)
-                            VALUES (:sid, :uid, :proud_achievement, NOW(), NOW())";
+                $insert = "INSERT INTO career_answers (session_id, user_id, strengths, created_at, updated_at)
+                            VALUES (:sid, :uid, :strengths, NOW(), NOW())";
                 $stmt = $pdo->prepare($insert);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
-                $stmt->bindValue(':proud_achievement', $proudAchievement, PDO::PARAM_STR);
+                $stmt->bindValue(':strengths', $strengths, PDO::PARAM_STR);
                 $stmt->execute();
             }
 
-            // セッション進捗を次に進める（current_step=9）
+            // セッション進捗を次に進める（current_step=10）
             $updSession = "UPDATE career_sessions
-                            SET current_step = 9,
+                            SET current_step = 10,
                                 updated_at = NOW()
                             WHERE id = :sid AND user_id = :uid";
             $stmt = $pdo->prepare($updSession);
@@ -149,48 +149,22 @@ try {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>アンケート - Q8</title>
+    <title>アンケート - Q9</title>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        body { font-family: system-ui, -apple-system, "Noto Sans JP", sans-serif; background:#f6f7fb; margin:0; }
-        .wrap { max-width:720px; margin:0 auto; padding:24px; }
-        .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 6px 20px rgba(0,0,0,.06); }
-        .qno { font-weight:700; color:#6b7280; margin-bottom:6px; }
-        h1 { font-size:20px; margin:0 0 12px; }
-        .desc { color:#6b7280; margin:0 0 16px; font-size:14px; line-height:1.6; }
-        .err { background:#fff1f2; color:#9f1239; padding:10px 12px; border-radius:10px; margin-bottom:12px; }
-
         textarea {
-            width:100%;
-            min-height: 200px;
-            padding: 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 16px;
-            box-sizing: border-box;
-            resize: vertical;
-            line-height: 1.6;
+            min-height: 220px;
         }
-
-        .hint {
-            font-size:13px;
-            color:#6b7280;
-            margin-top:8px;
-            line-height:1.6;
-        }
-
-        .actions { display:flex; justify-content:flex-end; margin-top:14px; }
-        .btn { border:0; background:#111827; color:#fff; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer; }
     </style>
 </head>
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q8 / キャリア</div>
-        <h1>これまでの仕事で「一番誇れる成果」は何ですか？</h1>
+        <div class="qno">Q9 / 強み</div>
+        <h1>あなたの「強み」や「得意なこと」は何だと思いますか？</h1>
         <p class="desc">
-            大きな実績じゃなくてもOKです。<br>
-            「頑張ったこと」「工夫したこと」「人に喜ばれたこと」など、あなたの強みのヒントになります。
+            自己評価でOKです。<br>
+            「よく褒められること」「無意識にやってしまうこと」「人より楽にできること」「時間を忘れてできること」などがヒントになります。
         </p>
 
         <?php if ($error): ?>
@@ -201,16 +175,14 @@ try {
             <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
 
             <textarea
-                name="proud_achievement"
+                name="strengths"
                 placeholder="例）
-・何をする状況だった？（背景）
-・自分がやったこと（工夫）
-・結果（数字があれば最高／なければ変化）
-・学んだこと"><?= h($proudAchievement) ?></textarea>
+・よく言われること（周りからの評価）
+・自分で得意だと思うこと
+・それが活きた場面"><?= h($strengths) ?></textarea>
 
             <div class="hint">
-                数字があれば強いですが、なくても大丈夫です。<br>
-                「自分がどう動いたか」が分かると、学習の最適化に効きます。
+                うまく書けない場合は、「苦手なこと」の反対を考えるのもアリです。
             </div>
 
             <div class="actions">

@@ -34,18 +34,23 @@ body[data-has-sub="0"] .app-shell {
 
 /* 赤エリア（常に同じ幅を維持） */
 .nav-top {
-    grid-column: 1;
-    grid-row: 1;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: calc(var(--iconW) + var(--subW));
+    height: var(--topH);
     background: #0a2f44;
     color: #fff;
     display: flex;
     align-items: center;
     padding: 0 14px;
     min-width: calc(var(--iconW) + var(--subW));
+    z-index: 1000;
 }
 
 body[data-has-sub="0"] .nav-top {
-    min-width: calc(var(--iconW) + var(--subW));
+    width: var(--iconW);
+    min-width: var(--iconW);
 }
 
 .brand {
@@ -56,14 +61,22 @@ body[data-has-sub="0"] .nav-top {
 
 /* 右上 */
 .main-top {
-    grid-column: 2;
-    grid-row: 1;
+    position: fixed;
+    top: 0;
+    left: calc(var(--iconW) + var(--subW));
+    right: 0;
+    height: var(--topH);
     background: #fff;
     border-bottom: 1px solid rgba(0, 0, 0, .06);
     display: flex;
     justify-content: flex-end;
     align-items: center;
     padding: 0 18px;
+    z-index: 999;
+}
+
+body[data-has-sub="0"] .main-top {
+    left: var(--iconW);
 }
 
 .user-menu {
@@ -144,12 +157,19 @@ body[data-has-sub="0"] .nav-sub {
 }
 
 .nav-icons {
+    position: fixed;
+    top: var(--topH);
+    left: 0;
+    width: var(--iconW);
+    height: calc(100vh - var(--topH));
     background: linear-gradient(180deg, var(--navGradA), var(--navGradB));
     padding: 12px 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    overflow-y: auto;
+    z-index: 998;
 }
 
 .nav-icon-btn {
@@ -170,10 +190,16 @@ body[data-has-sub="0"] .nav-sub {
 }
 
 .nav-sub {
+    position: fixed;
+    top: var(--topH);
+    left: var(--iconW);
+    width: var(--subW);
+    height: calc(100vh - var(--topH));
     background: linear-gradient(180deg, #07324a, #062a3a);
     color: #fff;
     padding: 14px 12px;
-    overflow: auto;
+    overflow-y: auto;
+    z-index: 997;
 }
 
 .subpanel {

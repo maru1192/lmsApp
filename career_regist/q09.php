@@ -64,11 +64,38 @@ if (empty($_SESSION['csrf_token'])) {
 $csrfToken = $_SESSION['csrf_token'];
 
 $error = '';
-$strengths = '';
+$selectedValues = [];
+$valuesNote = '';
+
+/**
+ * 価値観の選択肢（DBに入る値 => 表示ラベル）
+ */
+$options = [
+    '成長（上達）' => '成長（上達）',
+    '挑戦（未知へ）' => '挑戦（未知へ）',
+    '探究（本質理解）' => '探究（本質理解）',
+    '創造（つくる）' => '創造（つくる）',
+    '自由（選べる）' => '自由（選べる）',
+    '自律（自分で決める）' => '自律（自分で決める）',
+    '成果（結果）' => '成果（結果）',
+    '卓越（品質）' => '卓越（品質）',
+    'スピード（即決即実行）' => 'スピード（即決即実行）',
+    '効率（ムダを減らす）' => '効率（ムダを減らす）',
+    '収入（経済的豊かさ）' => '収入（経済的豊かさ）',
+    '誠実（言行一致）' => '誠実（言行一致）',
+    '信頼（長期関係）' => '信頼（長期関係）',
+    '協調（チーム最適）' => '協調（チーム最適）',
+    '貢献（役に立つ）' => '貢献（役に立つ）',
+    '影響（波及を生む）' => '影響（波及を生む）',
+    '安心・安定（リスク回避）' => '安心・安定（リスク回避）',
+    '健康（持続可能）' => '健康（持続可能）',
+    '意味・納得' => '意味・納得',
+    '自分らしさ（ありのまま）' => '自分らしさ（ありのまま）',
+];
 
 try {
     // 既存回答（途中再開用）
-    $sql = "SELECT id, strengths
+    $sql = "SELECT id, values_important
             FROM career_answers
             WHERE session_id = :sid AND user_id = :uid
             ORDER BY id DESC
@@ -79,8 +106,21 @@ try {
     $stmt->execute();
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($existing && !empty($existing['strengths'])) {
-        $strengths = (string)$existing['strengths'];
+    // 既存の保存形式：「価値観A,価値観B / 補足：xxx」を想定して復元
+    if ($existing && !empty($existing['values_important'])) {
+        $raw = (string)$existing['values_important'];
+
+        $note = '';
+        $parts = explode('/ 補足：', $raw, 2);
+        $listPart = trim($parts[0]);
+        if (count($parts) === 2) {
+            $note = trim($parts[1]);
+        }
+
+        if ($listPart !== '') {
+            $selectedValues = array_map('trim', explode(',', $listPart));
+        }
+        $valuesNote = $note;
     }
 
     // POST：保存して次へ
@@ -91,41 +131,59 @@ try {
             exit('Invalid CSRF token');
         }
 
-        $strengths = trim((string)($_POST['strengths'] ?? ''));
+        // checkboxは配列で来る
+        $selectedValues = $_POST['important_values'] ?? [];
+        if (!is_array($selectedValues)) $selectedValues = [];
 
-        // バリデーション
-        if ($strengths === '') {
-            $error = '入力してください。';
-        } elseif (mb_strlen($strengths) > 5000) {
-            $error = '長すぎます（5000文字以内）。';
+        // 補足
+        $valuesNote = trim((string)($_POST['values_note'] ?? ''));
+
+        // 選択肢のバリデーション（想定外の値を除外）
+        $selectedValues = array_values(array_filter($selectedValues, function ($v) use ($options) {
+            return is_string($v) && array_key_exists($v, $options);
+        }));
+
+        // 必須：1つ以上選択、または補足記入
+        if (count($selectedValues) === 0 && $valuesNote === '') {
+            $error = '価値観を1つ以上選択するか、補足を記入してください。';
+        } elseif (mb_strlen($valuesNote) > 3000) {
+            $error = '補足が長すぎます（3000文字以内）。';
         } else {
             $pdo->beginTransaction();
+
+            // カンマ区切り + 補足で保存
+            $valuesValue = implode(',', $selectedValues);
+            if ($valuesNote !== '') {
+                $finalValue = $valuesValue . ' / 補足：' . $valuesNote;
+            } else {
+                $finalValue = $valuesValue;
+            }
 
             // career_answers があるなら UPDATE、なければ INSERT
             if ($existing) {
                 $update = "UPDATE career_answers
-                            SET strengths = :strengths,
+                            SET values_important = :values_important,
                                 updated_at = NOW()
                             WHERE id = :id AND session_id = :sid AND user_id = :uid";
                 $stmt = $pdo->prepare($update);
-                $stmt->bindValue(':strengths', $strengths, PDO::PARAM_STR);
+                $stmt->bindValue(':values_important', $finalValue, PDO::PARAM_STR);
                 $stmt->bindValue(':id', (int)$existing['id'], PDO::PARAM_INT);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
-                $insert = "INSERT INTO career_answers (session_id, user_id, strengths, created_at, updated_at)
-                            VALUES (:sid, :uid, :strengths, NOW(), NOW())";
+                $insert = "INSERT INTO career_answers (session_id, user_id, values_important, created_at, updated_at)
+                            VALUES (:sid, :uid, :values_important, NOW(), NOW())";
                 $stmt = $pdo->prepare($insert);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
-                $stmt->bindValue(':strengths', $strengths, PDO::PARAM_STR);
+                $stmt->bindValue(':values_important', $finalValue, PDO::PARAM_STR);
                 $stmt->execute();
             }
 
-            // セッション進捗を次に進める（current_step=10）
+            // セッション進捗を次に進める（current_step=11）
             $updSession = "UPDATE career_sessions
-                            SET current_step = 10,
+                            SET current_step = 11,
                                 updated_at = NOW()
                             WHERE id = :sid AND user_id = :uid";
             $stmt = $pdo->prepare($updSession);
@@ -149,48 +207,29 @@ try {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>アンケート - Q9</title>
+    <title>アンケート - Q10</title>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        body { font-family: system-ui, -apple-system, "Noto Sans JP", sans-serif; background:#f6f7fb; margin:0; }
-        .wrap { max-width:720px; margin:0 auto; padding:24px; }
-        .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 6px 20px rgba(0,0,0,.06); }
-        .qno { font-weight:700; color:#6b7280; margin-bottom:6px; }
-        h1 { font-size:20px; margin:0 0 12px; }
-        .desc { color:#6b7280; margin:0 0 16px; font-size:14px; line-height:1.6; }
-        .err { background:#fff1f2; color:#9f1239; padding:10px 12px; border-radius:10px; margin-bottom:12px; }
-
+        .grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
         textarea {
-            width:100%;
-            min-height: 220px;
-            padding: 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 16px;
-            box-sizing: border-box;
-            resize: vertical;
-            line-height: 1.6;
+            min-height: 140px;
         }
-
-        .hint {
-            font-size:13px;
-            color:#6b7280;
-            margin-top:8px;
-            line-height:1.6;
+        .label {
+            margin: 8px 0 6px;
+            padding-top: 20px;
         }
-
-        .actions { display:flex; justify-content:flex-end; margin-top:14px; }
-        .btn { border:0; background:#111827; color:#fff; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer; }
     </style>
 </head>
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q9 / 強み</div>
-        <h1>あなたの「強み」や「得意なこと」は何だと思いますか？</h1>
+        <div class="qno">Q10 / 価値観</div>
+        <h1>あなたが「大事にしたい価値観」は何ですか？</h1>
         <p class="desc">
-            自己評価でOKです。<br>
-            「よく褒められること」「無意識にやってしまうこと」「人より楽にできること」などがヒントになります。
+            学習を続けるための軸になる価値観を明確にします。<br>
+            当てはまるものを選び、補足があれば自由に記入してください（選択のみでもOK）
         </p>
 
         <?php if ($error): ?>
@@ -200,16 +239,29 @@ try {
         <form method="post" action="">
             <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
 
+            <div class="grid">
+                <?php foreach ($options as $value => $label): ?>
+                    <label class="opt">
+                        <input
+                            type="checkbox"
+                            name="important_values[]"
+                            value="<?= h($value) ?>"
+                            <?= in_array($value, $selectedValues) ? 'checked' : '' ?> />
+                        <span><?= h($label) ?></span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+
+            <span class="label">任意：上記で伝えきれない部分があれば記載してください！</span>
             <textarea
-                name="strengths"
+                name="values_note"
                 placeholder="例）
-・よく言われること（周りからの評価）
-・自分で得意だと思うこと
-・それが活きた場面
-・今後もっと伸ばしたい強み"><?= h($strengths) ?></textarea>
+・なぜその価値観を大事にしたいか
+・過去にその価値観が満たされて嬉しかった経験
+・満たされないと、どう感じるか"><?= h($valuesNote) ?></textarea>
 
             <div class="hint">
-                うまく書けない場合は、「苦手なこと」の反対を考えるのもアリです。
+                選択肢だけでもOK、補足だけでもOKです。自分のペースで考えてみてください。
             </div>
 
             <div class="actions">

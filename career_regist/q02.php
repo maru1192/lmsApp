@@ -237,30 +237,11 @@ try {
     <title>アンケート - Q2</title>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        body { font-family: system-ui, -apple-system, "Noto Sans JP", sans-serif; background:#f6f7fb; margin:0; }
-        .wrap { max-width:720px; margin:0 auto; padding:24px; }
-        .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 6px 20px rgba(0,0,0,.06); }
-        .qno { font-weight:700; color:#6b7280; margin-bottom:6px; }
-        h1 { font-size:20px; margin:0 0 12px; }
-        .desc { color:#6b7280; margin:0 0 16px; font-size:14px; line-height:1.6; }
-        .err { background:#fff1f2; color:#9f1239; padding:10px 12px; border-radius:10px; margin-bottom:12px; }
-        .field { margin-bottom:14px; }
-        .label { font-weight:700; display:block; margin-bottom:6px; }
-        input[type="time"], input[type="number"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
         .days { display:flex; flex-wrap:wrap; gap:10px; }
         .day {
             display:flex; align-items:center; gap:8px;
             padding:10px 12px; border:1px solid #e5e7eb; border-radius:12px;
         }
-        .actions { display:flex; justify-content:flex-end; margin-top:14px; }
-        .btn { border:0; background:#111827; color:#fff; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer; }
         .row { display:flex; gap:12px; }
         .col { flex:1; }
     </style>

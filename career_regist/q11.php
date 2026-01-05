@@ -64,11 +64,26 @@ if (empty($_SESSION['csrf_token'])) {
 $csrfToken = $_SESSION['csrf_token'];
 
 $error = '';
-$valuesNotWant = '';
+
+// 理想の姿（各項目）
+$future3y = [
+    'work' => '',
+    'money' => '',
+    'life' => '',
+    'relationship' => '',
+    'health' => '',
+];
+$future1y = [
+    'work' => '',
+    'money' => '',
+    'life' => '',
+    'relationship' => '',
+    'health' => '',
+];
 
 try {
     // 既存回答（途中再開用）
-    $sql = "SELECT id, values_not_want
+    $sql = "SELECT id, future_vision
             FROM career_answers
             WHERE session_id = :sid AND user_id = :uid
             ORDER BY id DESC
@@ -79,8 +94,17 @@ try {
     $stmt->execute();
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($existing && !empty($existing['values_not_want'])) {
-        $valuesNotWant = (string)$existing['values_not_want'];
+    // 既存データがあれば復元（JSON形式を想定）
+    if ($existing && !empty($existing['future_vision'])) {
+        $data = json_decode($existing['future_vision'], true);
+        if (is_array($data)) {
+            if (isset($data['3y']) && is_array($data['3y'])) {
+                $future3y = array_merge($future3y, $data['3y']);
+            }
+            if (isset($data['1y']) && is_array($data['1y'])) {
+                $future1y = array_merge($future1y, $data['1y']);
+            }
+        }
     }
 
     // POST：保存して次へ
@@ -91,41 +115,69 @@ try {
             exit('Invalid CSRF token');
         }
 
-        $valuesNotWant = trim((string)($_POST['values_not_want'] ?? ''));
+        // 3年後の理想
+        $future3y = [
+            'work' => trim((string)($_POST['future_3y_work'] ?? '')),
+            'money' => trim((string)($_POST['future_3y_money'] ?? '')),
+            'life' => trim((string)($_POST['future_3y_life'] ?? '')),
+            'relationship' => trim((string)($_POST['future_3y_relationship'] ?? '')),
+            'health' => trim((string)($_POST['future_3y_health'] ?? '')),
+        ];
 
-        // バリデーション
-        if ($valuesNotWant === '') {
-            $error = '入力してください。';
-        } elseif (mb_strlen($valuesNotWant) > 5000) {
-            $error = '長すぎます（5000文字以内）。';
+        // 1年後の理想
+        $future1y = [
+            'work' => trim((string)($_POST['future_1y_work'] ?? '')),
+            'money' => trim((string)($_POST['future_1y_money'] ?? '')),
+            'life' => trim((string)($_POST['future_1y_life'] ?? '')),
+            'relationship' => trim((string)($_POST['future_1y_relationship'] ?? '')),
+            'health' => trim((string)($_POST['future_1y_health'] ?? '')),
+        ];
+
+        // バリデーション：3年後の少なくとも1項目が必須
+        $has3yContent = false;
+        foreach ($future3y as $val) {
+            if ($val !== '') {
+                $has3yContent = true;
+                break;
+            }
+        }
+
+        if (!$has3yContent) {
+            $error = '3年後の理想について、少なくとも1つの項目を記入してください。';
         } else {
+            // JSON形式で保存
+            $saveData = json_encode([
+                '3y' => $future3y,
+                '1y' => $future1y,
+            ], JSON_UNESCAPED_UNICODE);
+
             $pdo->beginTransaction();
 
-            // career_answers があるなら UPDATE、なければ INSERT
             if ($existing) {
                 $update = "UPDATE career_answers
-                            SET values_not_want = :values_not_want,
+                            SET future_vision = :future_vision,
                                 updated_at = NOW()
                             WHERE id = :id AND session_id = :sid AND user_id = :uid";
                 $stmt = $pdo->prepare($update);
-                $stmt->bindValue(':values_not_want', $valuesNotWant, PDO::PARAM_STR);
+                $stmt->bindValue(':future_vision', $saveData, PDO::PARAM_STR);
                 $stmt->bindValue(':id', (int)$existing['id'], PDO::PARAM_INT);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
-                $insert = "INSERT INTO career_answers (session_id, user_id, values_not_want, created_at, updated_at)
-                            VALUES (:sid, :uid, :values_not_want, NOW(), NOW())";
+                $insert = "INSERT INTO career_answers (session_id, user_id, future_vision, created_at, updated_at)
+                            VALUES (:sid, :uid, :future_vision, NOW(), NOW())";
                 $stmt = $pdo->prepare($insert);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
-                $stmt->bindValue(':values_not_want', $valuesNotWant, PDO::PARAM_STR);
+                $stmt->bindValue(':future_vision', $saveData, PDO::PARAM_STR);
                 $stmt->execute();
             }
 
-            // セッション進捗を次に進める（current_step=12）
+            // セッション進捗を完了へ（current_step=12）
             $updSession = "UPDATE career_sessions
                             SET current_step = 12,
+                                status = 'completed',
                                 updated_at = NOW()
                             WHERE id = :sid AND user_id = :uid";
             $stmt = $pdo->prepare($updSession);
@@ -135,7 +187,8 @@ try {
 
             $pdo->commit();
 
-            header('Location: q12.php');
+            // 完了ページへリダイレクト（仮にhome.phpとする）
+            header('Location: ../home.php');
             exit;
         }
     }
@@ -152,45 +205,54 @@ try {
     <title>アンケート - Q11</title>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        body { font-family: system-ui, -apple-system, "Noto Sans JP", sans-serif; background:#f6f7fb; margin:0; }
-        .wrap { max-width:720px; margin:0 auto; padding:24px; }
-        .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 6px 20px rgba(0,0,0,.06); }
-        .qno { font-weight:700; color:#6b7280; margin-bottom:6px; }
-        h1 { font-size:20px; margin:0 0 12px; }
-        .desc { color:#6b7280; margin:0 0 16px; font-size:14px; line-height:1.6; }
-        .err { background:#fff1f2; color:#9f1239; padding:10px 12px; border-radius:10px; margin-bottom:12px; }
-
-        textarea {
-            width:100%;
-            min-height: 240px;
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #111827;
+            margin: 32px 0 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .section-title:first-of-type {
+            margin-top: 24px;
+        }
+        .future-item {
+            margin-bottom: 20px;
+        }
+        .future-item label {
+            display: block;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+        .future-item textarea {
+            width: 100%;
+            min-height: 80px;
             padding: 12px;
             border: 1px solid #e5e7eb;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 15px;
             box-sizing: border-box;
             resize: vertical;
             line-height: 1.6;
         }
-
-        .hint {
-            font-size:13px;
-            color:#6b7280;
-            margin-top:8px;
-            line-height:1.6;
+        .arrow-down {
+            text-align: center;
+            font-size: 24px;
+            color: #6b7280;
+            margin: 24px 0;
         }
-
-        .actions { display:flex; justify-content:flex-end; margin-top:14px; }
-        .btn { border:0; background:#111827; color:#fff; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer; }
     </style>
 </head>
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q11 / 価値観</div>
-        <h1>あなたが「絶対に避けたいこと／やりたくないこと」は何ですか？</h1>
+        <div class="qno">Q11 / 未来の理想</div>
+        <h1>未来の理想をステップで描いてください</h1>
         <p class="desc">
-            ここが明確になると、学習設計やキャリアの意思決定がブレにくくなります。<br>
-            例：長時間労働、理不尽な評価、裁量がない、ルールが曖昧、ノルマ至上主義、人間関係が悪い、成長実感がない など
+            3年後→1年後という順番で、理想の姿を具体的に描いてください。<br>
+            まず長期的な視点から考えることで、より明確な目標設定ができます。
         </p>
 
         <?php if ($error): ?>
@@ -200,19 +262,70 @@ try {
         <form method="post" action="">
             <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
 
-            <textarea
-                name="values_not_want"
-                placeholder="例）
-・避けたいこと（3〜10個くらい）
-・なぜ避けたいか（過去の経験があれば）
-・それが起きると、どんな状態になると最悪か"><?= h($valuesNotWant) ?></textarea>
+            <!-- 3年後の理想 -->
+            <div class="section-title">📅 3年後の理想の姿を教えてください</div>
 
-            <div class="hint">
-                書きづらければ「過去に一番しんどかった仕事/環境は？」「もう二度とやりたくないことは？」から思い出すと出やすいです。
+            <div class="future-item">
+                <label>仕事</label>
+                <textarea name="future_3y_work" placeholder="例）Webマーケターとして独立／新規事業の責任者になっている"><?= h($future3y['work']) ?></textarea>
+            </div>
+
+            <div class="future-item">
+                <label>お金</label>
+                <textarea name="future_3y_money" placeholder="例）年収800万円／副業で月10万円稼ぐ"><?= h($future3y['money']) ?></textarea>
+            </div>
+
+            <div class="future-item">
+                <label>生活・環境</label>
+                <textarea name="future_3y_life" placeholder="例）地方に移住して在宅勤務／都心のオフィスで働く"><?= h($future3y['life']) ?></textarea>
+            </div>
+
+            <div class="future-item">
+                <label>人間関係</label>
+                <textarea name="future_3y_relationship" placeholder="例）同じ志を持つ仲間と協働／家族との時間を大切にしている"><?= h($future3y['relationship']) ?></textarea>
+            </div>
+
+            <div class="future-item">
+                <label>健康・メンタル（心）</label>
+                <textarea name="future_3y_health" placeholder="例）運動習慣が身についている／ストレスなく働けている"><?= h($future3y['health']) ?></textarea>
+            </div>
+
+            <div class="arrow-down">↓</div>
+
+            <!-- 1年後の理想 -->
+            <div class="section-title">📅 1年後の理想の姿を教えてください</div>
+
+            <div class="future-item">
+                <label>仕事</label>
+                <textarea name="future_1y_work" placeholder="例）マーケティングの実績を作る／新しいスキルを習得している"><?= h($future1y['work']) ?></textarea>
+            </div>
+
+            <div class="future-item">
+                <label>お金</label>
+                <textarea name="future_1y_money" placeholder="例）年収600万円／副業で月3万円稼ぐ"><?= h($future1y['money']) ?></textarea>
+            </div>
+
+            <div class="future-item">
+                <label>生活・環境</label>
+                <textarea name="future_1y_life" placeholder="例）リモートワーク中心の働き方に移行／引っ越しの準備を始める"><?= h($future1y['life']) ?></textarea>
+            </div>
+
+            <div class="future-item">
+                <label>人間関係</label>
+                <textarea name="future_1y_relationship" placeholder="例）社外の人脈を広げる／家族と過ごす時間を増やす"><?= h($future1y['relationship']) ?></textarea>
+            </div>
+
+            <div class="future-item">
+                <label>健康・メンタル（心）</label>
+                <textarea name="future_1y_health" placeholder="例）週2回の運動を習慣化／睡眠時間を確保できている"><?= h($future1y['health']) ?></textarea>
+            </div>
+
+            <div class="hint" style="margin-top: 20px;">
+                ※3年後の理想は必須です。1年後は任意ですが、記入することで段階的な目標設定ができます。
             </div>
 
             <div class="actions">
-                <button type="submit" class="btn">次へ</button>
+                <button type="submit" class="btn">完了</button>
             </div>
         </form>
     </div>

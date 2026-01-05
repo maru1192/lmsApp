@@ -149,39 +149,14 @@ try {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>アンケート - Q4</title>
     <link rel="stylesheet" href="css/style.css" />
-    <style>
-        body { font-family: system-ui, -apple-system, "Noto Sans JP", sans-serif; background:#f6f7fb; margin:0; }
-        .wrap { max-width:720px; margin:0 auto; padding:24px; }
-        .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 6px 20px rgba(0,0,0,.06); }
-        .qno { font-weight:700; color:#6b7280; margin-bottom:6px; }
-        h1 { font-size:20px; margin:0 0 12px; }
-        .desc { color:#6b7280; margin:0 0 16px; font-size:14px; line-height:1.6; }
-        .err { background:#fff1f2; color:#9f1239; padding:10px 12px; border-radius:10px; margin-bottom:12px; }
-        .field { margin-bottom:14px; }
-        .label { font-weight:700; display:block; margin-bottom:6px; }
-        textarea {
-            width:100%;
-            min-height: 140px;
-            padding: 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 16px;
-            box-sizing: border-box;
-            resize: vertical;
-        }
-        .actions { display:flex; justify-content:flex-end; margin-top:14px; }
-        .btn { border:0; background:#111827; color:#fff; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer; }
-        .hint { font-size: 13px; color:#6b7280; margin-top:8px; line-height:1.6; }
-        .hint ul { margin: 6px 0 0 18px; }
-    </style>
 </head>
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q4 / 実績</div>
-        <h1>これまでの仕事で「一番誇れる成果」は何ですか？</h1>
+        <div class="qno">Q4 / キャリア</div>
+        <h1>これまでのキャリアの全体像を教えてください（ざっくりでOK）</h1>
         <p class="desc">
-            大きな成果じゃなくてもOKです。あなたが「やってよかった」と思える経験を書いてください。
+            職歴や経験を時系列で振り返ってみてください。学習設計の参考にします。
         </p>
 
         <?php if ($error): ?>
@@ -192,15 +167,15 @@ try {
             <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
 
             <div class="field">
-                <span class="label">成果の内容</span>
+                <span class="label">キャリアの流れ</span>
                 <textarea name="proud_achievement" required><?= h($proudAchievement) ?></textarea>
                 <div class="hint">
                     書きやすい型（任意）：
                     <ul>
-                        <li>何を（状況/課題）</li>
-                        <li>どうやって（工夫/行動）</li>
-                        <li>結果どうなった（数字があれば最高）</li>
-                        <li>そこから得た学び</li>
+                        <li>いつから何をやっていたか（会社名・職種・役割）</li>
+                        <li>どんな仕事内容だったか</li>
+                        <li>転職や異動があればその理由</li>
+                        <li>現在に至るまでの流れ</li>
                     </ul>
                 </div>
             </div>

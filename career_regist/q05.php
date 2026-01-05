@@ -22,7 +22,7 @@ sschk();
 $userId = (int)$_SESSION['user_id'];
 
 /**
- * career_session_id を用意（q01〜と同じ）
+ * career_session_id を用意（q01と同じ）
  */
 function ensureCareerSessionId(PDO $pdo, int $userId): int {
     if (!empty($_SESSION['career_session_id'])) {
@@ -64,11 +64,80 @@ if (empty($_SESSION['csrf_token'])) {
 $csrfToken = $_SESSION['csrf_token'];
 
 $error = '';
-$strengths = '';
+
+// チェック済みの値（配列）
+$selectedValues = [];
+// 補足テキスト
+$valuesNote = '';
+
+/**
+ * 価値観 選択肢（カテゴリーごとに分類）
+ * 今の仕事で「好き／続けたい」要素
+ */
+$optionsGrouped = [
+    '🎯 仕事のやりがいについて' => [
+        '成果を正当に評価される' => '成果を正当に評価される',
+        '変化や刺激がある' => '変化や刺激がある',
+        '仕事の裁量権がある' => '仕事の裁量権がある',
+        '成長実感が持てる' => '成長実感が持てる',
+        '社会/顧客への貢献を感じる' => '社会/顧客への貢献を感じる',
+        '目的/意義が明確な仕事' => '目的/意義が明確な仕事',
+        '適切な目標設定' => '適切な目標設定',
+        '希望する部署で働ける' => '希望する部署で働ける',
+        '新しいことに挑戦できる' => '新しいことに挑戦できる',
+        '専門性を磨ける' => '専門性を磨ける',
+    ],
+    '💼 業務・働き方について' => [
+        '残業が少ない' => '残業が少ない',
+        '休日がしっかり取れる' => '休日がしっかり取れる',
+        '適切な人員配置' => '適切な人員配置',
+        '効率的な業務' => '効率的な業務',
+        '通勤がラク' => '通勤がラク',
+        'リモートワークができる' => 'リモートワークができる',
+        'オンオフが切り替えられる' => 'オンオフが切り替えられる',
+        '有給休暇が取りやすい' => '有給休暇が取りやすい',
+        '勤務時間に柔軟性がある' => '勤務時間に柔軟性がある',
+        '休みが多い' => '休みが多い',
+        '休みが規則的' => '休みが規則的',
+    ],
+    '💰 福利厚生・報酬について' => [
+        '給与が適正' => '給与が適正',
+        '昇給しやすい' => '昇給しやすい',
+        '賞与/インセンティブが充実' => '賞与/インセンティブが充実',
+        '福利厚生が充実している' => '福利厚生が充実している',
+    ],
+    '🤝 人間関係・社風について' => [
+        '人間関係が良い' => '人間関係が良い',
+        'フラットな関係性' => 'フラットな関係性',
+        '上司の指導・支援が充実' => '上司の指導・支援が充実',
+        '意思決定が速い' => '意思決定が速い',
+        'ハラスメントがない' => 'ハラスメントがない',
+        '感謝や称賛の文化' => '感謝や称賛の文化',
+        '情報共有が活発' => '情報共有が活発',
+        'チームワークを感じる' => 'チームワークを感じる',
+        '評価が公平・透明' => '評価が公平・透明',
+        '当事者意識が強い' => '当事者意識が強い',
+        '風通しが良い' => '風通しが良い',
+        '社内政治が少ない' => '社内政治が少ない',
+        '変化を歓迎する体質' => '変化を歓迎する体質',
+        'コンプライアンス意識が高い' => 'コンプライアンス意識が高い',
+    ],
+    '🚀 将来性について' => [
+        '会社の経営が安定' => '会社の経営が安定',
+        '業界の将来が明るい' => '業界の将来が明るい',
+        'キャリアの可能性が広がる' => 'キャリアの可能性が広がる',
+    ],
+];
+
+// バリデーション用：全選択肢を1次元配列に展開
+$allOptions = [];
+foreach ($optionsGrouped as $items) {
+    $allOptions = array_merge($allOptions, $items);
+}
 
 try {
     // 既存回答（途中再開用）
-    $sql = "SELECT id, strengths
+    $sql = "SELECT id, values_important
             FROM career_answers
             WHERE session_id = :sid AND user_id = :uid
             ORDER BY id DESC
@@ -79,8 +148,23 @@ try {
     $stmt->execute();
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($existing && !empty($existing['strengths'])) {
-        $strengths = (string)$existing['strengths'];
+    // 既存の保存形式：「成長,自由 / 補足：xxx」を想定して復元
+    if ($existing && !empty($existing['values_important'])) {
+        $raw = (string)$existing['values_important'];
+
+        // 補足があれば取り出す
+        $note = '';
+        $parts = explode('/ 補足：', $raw, 2);
+        $listPart = trim($parts[0]);
+        if (count($parts) === 2) {
+            $note = trim($parts[1]);
+        }
+
+        if ($listPart !== '') {
+            $tmp = array_map('trim', explode(',', $listPart));
+            $selectedValues = array_values(array_filter($tmp, fn($v) => $v !== ''));
+        }
+        $valuesNote = $note;
     }
 
     // POST：保存して次へ
@@ -91,39 +175,55 @@ try {
             exit('Invalid CSRF token');
         }
 
-        $strengths = trim((string)($_POST['strengths'] ?? ''));
+        // checkboxは配列で来る
+        $selectedValues = $_POST['values_important'] ?? [];
+        if (!is_array($selectedValues)) $selectedValues = [];
 
-        // バリデーション（必須）
-        if ($strengths === '') {
-            $error = '入力してください。';
+        // 補足
+        $valuesNote = trim((string)($_POST['values_note'] ?? ''));
+
+        // 選択肢のバリデーション（想定外の値を除外）
+        $selectedValues = array_values(array_filter($selectedValues, function ($v) use ($allOptions) {
+            return is_string($v) && array_key_exists($v, $allOptions);
+        }));
+
+        // 必須：1つ以上選択
+        if (count($selectedValues) === 0) {
+            $error = '少なくとも1つ選択してください。';
         } else {
+            // DB保存用（CSV + 補足）
+            $saveText = implode(', ', $selectedValues);
+            if ($valuesNote !== '') {
+                $saveText .= ' / 補足：' . $valuesNote;
+            }
+
             $pdo->beginTransaction();
 
             // career_answers があるなら UPDATE、なければ INSERT
             if ($existing) {
                 $update = "UPDATE career_answers
-                            SET strengths = :strengths,
+                            SET values_important = :values_important,
                                 updated_at = NOW()
                             WHERE id = :id AND session_id = :sid AND user_id = :uid";
                 $stmt = $pdo->prepare($update);
-                $stmt->bindValue(':strengths', $strengths, PDO::PARAM_STR);
+                $stmt->bindValue(':values_important', $saveText, PDO::PARAM_STR);
                 $stmt->bindValue(':id', (int)$existing['id'], PDO::PARAM_INT);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
-                $insert = "INSERT INTO career_answers (session_id, user_id, strengths, created_at, updated_at)
-                            VALUES (:sid, :uid, :strengths, NOW(), NOW())";
+                $insert = "INSERT INTO career_answers (session_id, user_id, values_important, created_at, updated_at)
+                            VALUES (:sid, :uid, :values_important, NOW(), NOW())";
                 $stmt = $pdo->prepare($insert);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
-                $stmt->bindValue(':strengths', $strengths, PDO::PARAM_STR);
+                $stmt->bindValue(':values_important', $saveText, PDO::PARAM_STR);
                 $stmt->execute();
             }
 
-            // セッション進捗を次へ（current_step=6）
+            // セッション進捗を次へ（current_step=7）
             $updSession = "UPDATE career_sessions
-                            SET current_step = 6,
+                            SET current_step = 7,
                                 updated_at = NOW()
                             WHERE id = :sid AND user_id = :uid";
             $stmt = $pdo->prepare($updSession);
@@ -147,53 +247,28 @@ try {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>アンケート - Q5</title>
+    <title>アンケート - Q6</title>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        body { font-family: system-ui, -apple-system, "Noto Sans JP", sans-serif; background:#f6f7fb; margin:0; }
-        .wrap { max-width:720px; margin:0 auto; padding:24px; }
-        .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 6px 20px rgba(0,0,0,.06); }
-        .qno { font-weight:700; color:#6b7280; margin-bottom:6px; }
-        h1 { font-size:20px; margin:0 0 12px; }
-        .desc { color:#6b7280; margin:0 0 16px; font-size:14px; line-height:1.6; }
-        .err { background:#fff1f2; color:#9f1239; padding:10px 12px; border-radius:10px; margin-bottom:12px; }
-        .field { margin-bottom:14px; }
-        .label { font-weight:700; display:block; margin-bottom:6px; }
         textarea {
-            width:100%;
-            min-height: 160px;
-            padding: 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 16px;
-            box-sizing: border-box;
-            resize: vertical;
+            min-height: 120px;
         }
-        .actions { display:flex; justify-content:flex-end; margin-top:14px; }
-        .btn { border:0; background:#111827; color:#fff; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer; }
-        .hint { font-size: 13px; color:#6b7280; margin-top:8px; line-height:1.6; }
-        .hint ul { margin: 6px 0 0 18px; }
-        .sample {
-            margin-top: 10px;
-            background: #f9fafb;
-            border: 1px dashed #e5e7eb;
-            padding: 10px 12px;
-            border-radius: 12px;
-            font-size: 13px;
-            color: #374151;
-            line-height: 1.7;
-            white-space: pre-wrap;
+        .label {
+            margin: 8px 0 6px;
+        }
+        .opt {
+            padding: 12px 12px;
         }
     </style>
 </head>
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q5 / 強み</div>
-        <h1>あなたの「強み」は何だと思いますか？</h1>
+        <div class="qno">Q6 / 今の仕事</div>
+        <h1>今の仕事で「好き／続けたい」と思う要素はなんですか？<br>（複数選択可）</h1>
         <p class="desc">
-            うまく言語化できなくてもOKです。<br>
-            「周りからよく褒められること」「自然にやってしまうこと」「成果に繋がりやすい行動」などを書いてみてください。
+            あなたの価値観に合っている「大事にしたい要素」を選んでください。<br>
+            これを活かして、学習の方向性や目標を一緒に考えていきます。
         </p>
 
         <?php if ($error): ?>
@@ -203,24 +278,26 @@ try {
         <form method="post" action="">
             <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
 
-            <div class="field">
-                <span class="label">強み（自由記述）</span>
-                <textarea name="strengths" required><?= h($strengths) ?></textarea>
-
-                <div class="hint">
-                    書きやすい型（おすすめ）：
-                    <ul>
-                        <li>強み①：〇〇（具体例：いつ/どんな場面で発揮した？）</li>
-                        <li>強み②：〇〇（具体例：周りからどう言われる？）</li>
-                        <li>強み③：〇〇（具体例：成果に繋がった体験は？）</li>
-                    </ul>
+            <?php foreach ($optionsGrouped as $groupLabel => $items): ?>
+                <h3 style="font-size: 16px; font-weight: bold; margin: 24px 0 12px; color: #111827;"><?= h($groupLabel) ?></h3>
+                <div class="grid">
+                    <?php foreach ($items as $value => $label): ?>
+                        <label class="opt">
+                            <input
+                                type="checkbox"
+                                name="values_important[]"
+                                value="<?= h($value) ?>"
+                                <?= in_array($value, $selectedValues, true) ? 'checked' : '' ?>
+                            />
+                            <span><?= h($label) ?></span>
+                        </label>
+                    <?php endforeach; ?>
                 </div>
+            <?php endforeach; ?>
 
-                <div class="sample">例）
-強み①：やり切る力（期限が短くても最後までやり切る）
-強み②：相手目線（相手が理解しやすい言い方に変えるのが得意）
-強み③：改善力（違和感を見つけて小さく直し続けられる）</div>
-            </div>
+            <span class="label">補足（任意）</span>
+            <textarea name="values_note" placeholder="例）成長：資格取得のサポートがある／仲間：チームの雰囲気が良い など"><?= h($valuesNote) ?></textarea>
+            <div class="hint">※選択肢で伝えきれない具体的な状況があれば記入してください。</div>
 
             <div class="actions">
                 <button type="submit" class="btn">次へ</button>

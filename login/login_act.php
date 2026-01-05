@@ -49,7 +49,7 @@ if($pw === true){
     $_SESSION['user_id'] = (int)$val['id'];
     
     //リダイレクト（event_list.phpへ）
-    redirect('../event/event_list.php');
+    redirect('../home.php');
 }else{
     //Login失敗時
     redirect('login.php');

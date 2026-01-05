@@ -64,12 +64,25 @@ if (empty($_SESSION['csrf_token'])) {
 $csrfToken = $_SESSION['csrf_token'];
 
 $error = '';
-$currentRole = '';
-$industry = '';
+$selectedTimeSlots = [];
+
+/**
+ * 時間帯の選択肢（DBに入る値 => 表示ラベル）
+ */
+$options = [
+    '平日朝' => '平日朝',
+    '平日昼休み' => '平日昼休み',
+    '平日夜' => '平日夜',
+    '通勤中' => '通勤中',
+    '土日午前' => '土日午前',
+    '土日午後' => '土日午後',
+    '土日夜' => '土日夜',
+    '不定期' => '不定期',
+];
 
 try {
     // 既存回答（途中再開用）
-    $sql = "SELECT id, current_job_role, industry
+    $sql = "SELECT id, study_time_slots
             FROM career_answers
             WHERE session_id = :sid AND user_id = :uid
             ORDER BY id DESC
@@ -80,9 +93,10 @@ try {
     $stmt->execute();
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($existing) {
-        if (!empty($existing['current_job_role'])) $currentRole = (string)$existing['current_job_role'];
-        if (!empty($existing['industry'])) $industry = (string)$existing['industry'];
+    // 既存の保存形式：カンマ区切りで復元
+    if ($existing && !empty($existing['study_time_slots'])) {
+        $raw = (string)$existing['study_time_slots'];
+        $selectedTimeSlots = array_filter(explode(',', $raw));
     }
 
     // POST：保存して次へ
@@ -93,37 +107,45 @@ try {
             exit('Invalid CSRF token');
         }
 
-        $currentRole = trim((string)($_POST['current_role'] ?? ''));
-        $industry = trim((string)($_POST['industry'] ?? ''));
+        // checkboxは配列で来る
+        $selectedTimeSlots = $_POST['study_time_slots'] ?? [];
+        if (!is_array($selectedTimeSlots)) $selectedTimeSlots = [];
 
-        // バリデーション（MVP：必須にするならここで）
-        if ($currentRole === '' || $industry === '') {
-            $error = '「職種/役割」と「業界」を入力してください。';
+        // 選択肢のバリデーション（想定外の値を除外）
+        $selectedTimeSlots = array_values(array_filter($selectedTimeSlots, function ($v) use ($options) {
+            return is_string($v) && array_key_exists($v, $options);
+        }));
+
+        // 必須：1つ以上選択、最大3つまで
+        if (count($selectedTimeSlots) === 0) {
+            $error = '少なくとも1つ選択してください。';
+        } elseif (count($selectedTimeSlots) > 3) {
+            $error = '最大3つまで選択できます。';
         } else {
             $pdo->beginTransaction();
+
+            // カンマ区切りで保存
+            $timeSlotsValue = implode(',', $selectedTimeSlots);
 
             // career_answers があるなら UPDATE、なければ INSERT
             if ($existing) {
                 $update = "UPDATE career_answers
-                            SET current_job_role = :current_role,
-                                industry = :industry
+                            SET study_time_slots = :study_time_slots
                             WHERE id = :id AND session_id = :sid AND user_id = :uid";
                 $stmt = $pdo->prepare($update);
-                $stmt->bindValue(':current_role', $currentRole, PDO::PARAM_STR);
-                $stmt->bindValue(':industry', $industry, PDO::PARAM_STR);
+                $stmt->bindValue(':study_time_slots', $timeSlotsValue, PDO::PARAM_STR);
                 $stmt->bindValue(':id', (int)$existing['id'], PDO::PARAM_INT);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
                 // 途中から来た場合でも最低限INSERTできるようにする
-                $insert = "INSERT INTO career_answers (session_id, user_id, current_job_role, industry)
-                            VALUES (:sid, :uid, :current_role, :industry)";
+                $insert = "INSERT INTO career_answers (session_id, user_id, study_time_slots)
+                            VALUES (:sid, :uid, :study_time_slots)";
                 $stmt = $pdo->prepare($insert);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
-                $stmt->bindValue(':current_role', $currentRole, PDO::PARAM_STR);
-                $stmt->bindValue(':industry', $industry, PDO::PARAM_STR);
+                $stmt->bindValue(':study_time_slots', $timeSlotsValue, PDO::PARAM_STR);
                 $stmt->execute();
             }
 
@@ -154,35 +176,14 @@ try {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>アンケート - Q3</title>
     <link rel="stylesheet" href="css/style.css" />
-    <style>
-        body { font-family: system-ui, -apple-system, "Noto Sans JP", sans-serif; background:#f6f7fb; margin:0; }
-        .wrap { max-width:720px; margin:0 auto; padding:24px; }
-        .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 6px 20px rgba(0,0,0,.06); }
-        .qno { font-weight:700; color:#6b7280; margin-bottom:6px; }
-        h1 { font-size:20px; margin:0 0 12px; }
-        .desc { color:#6b7280; margin:0 0 16px; font-size:14px; line-height:1.6; }
-        .err { background:#fff1f2; color:#9f1239; padding:10px 12px; border-radius:10px; margin-bottom:12px; }
-        .field { margin-bottom:14px; }
-        .label { font-weight:700; display:block; margin-bottom:6px; }
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        .actions { display:flex; justify-content:flex-end; margin-top:14px; }
-        .btn { border:0; background:#111827; color:#fff; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer; }
-    </style>
 </head>
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q3 / 現在の仕事</div>
-        <h1>現在の職種/役割と業界を教えてください</h1>
+        <div class="qno">Q3 / 学習時間</div>
+        <h1>学習に使えそうな時間帯はどこですか？（最大3つ）</h1>
         <p class="desc">
-            ここでの回答は「おすすめの学習順」や「目標設計」を最適化するために使います。ざっくりでOKです。
+            あなたの生活リズムに合わせた学習プランを提案するため、学習可能な時間帯を教えてください。
         </p>
 
         <?php if ($error): ?>
@@ -192,14 +193,17 @@ try {
         <form method="post" action="">
             <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
 
-            <div class="field">
-                <span class="label">職種/役割（例：営業、CS、デザイナー、エンジニア など）</span>
-                <input type="text" name="current_role" value="<?= h($currentRole) ?>" required>
-            </div>
-
-            <div class="field">
-                <span class="label">業界（例：IT/SaaS、建設、不動産、教育、医療 など）</span>
-                <input type="text" name="industry" value="<?= h($industry) ?>" required>
+            <div class="grid">
+                <?php foreach ($options as $value => $label): ?>
+                    <label class="opt">
+                        <input
+                            type="checkbox"
+                            name="study_time_slots[]"
+                            value="<?= h($value) ?>"
+                            <?= in_array($value, $selectedTimeSlots) ? 'checked' : '' ?> />
+                        <span><?= h($label) ?></span>
+                    </label>
+                <?php endforeach; ?>
             </div>
 
             <div class="actions">

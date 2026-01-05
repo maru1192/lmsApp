@@ -64,34 +64,76 @@ if (empty($_SESSION['csrf_token'])) {
 $csrfToken = $_SESSION['csrf_token'];
 
 $error = '';
-
-// チェック済みの値（配列）
 $selectedValues = [];
-// 補足テキスト
-$valuesNote = '';
+$jobStressNote = '';
 
 /**
- * 価値観 選択肢（DBに入る値 => 表示ラベル）
- * ※値は半角英数でも日本語でもOK。ここでは日本語で統一。
+ * 避けたい価値観・状況（仕事でしんどい/モヤモヤすること）
+ * カテゴリーごとに分類
  */
-$options = [
-    '成長'       => '成長（学び続けたい／伸びていたい）',
-    '挑戦'       => '挑戦（新しいことにトライしたい）',
-    '自由'       => '自由（時間・場所・裁量がほしい）',
-    '安定'       => '安定（収入・環境・将来の安心感）',
-    '成果'       => '成果（結果で評価されたい）',
-    '貢献'       => '貢献（誰かの役に立ちたい）',
-    '仲間'       => '仲間（チームで協力したい）',
-    '専門性'     => '専門性（スキルを極めたい）',
-    'ワークライフ' => 'ワークライフ（家族/健康/余白を大切に）',
-    '報酬'       => '報酬（高収入・単価アップ）',
-    '社会性'     => '社会性（社会課題・意義を感じたい）',
-    '創造性'     => '創造性（つくる/表現するのが好き）',
+$optionsGrouped = [
+    '🎯 仕事のやりがいについて' => [
+        '成果が正当に評価されない' => '成果が正当に評価されない',
+        '業務が単調' => '業務が単調',
+        '仕事の裁量権がない' => '仕事の裁量権がない',
+        '成長実感が持てない' => '成長実感が持てない',
+        '社会/顧客への貢献を感じにくい' => '社会/顧客への貢献を感じにくい',
+        '目的/意義が不明確な仕事が多い' => '目的/意義が不明確な仕事が多い',
+        '目標が曖昧' => '目標が曖昧',
+        '目標が高すぎる' => '目標が高すぎる',
+        '希望しない部署にいる' => '希望しない部署にいる',
+    ],
+    '💼 業務・働き方について' => [
+        '長時間労働が多い' => '長時間労働が多い',
+        '休日出勤が多い' => '休日出勤が多い',
+        '人員が不足している' => '人員が不足している',
+        '無駄な業務が多い' => '無駄な業務が多い',
+        '通勤が大変' => '通勤が大変',
+        'リモートワークができない' => 'リモートワークができない',
+        '勤務時間外に連絡が来る' => '勤務時間外に連絡が来る',
+        '有給休暇が取りづらい' => '有給休暇が取りづらい',
+        '勤務時間に柔軟性がない' => '勤務時間に柔軟性がない',
+        '休みが少ない' => '休みが少ない',
+        '休みが不定期' => '休みが不定期',
+    ],
+    '💰 福利厚生・報酬について' => [
+        '給与が低い' => '給与が低い',
+        '昇給しにくい' => '昇給しにくい',
+        '賞与/インセンティブが少ない' => '賞与/インセンティブが少ない',
+        '福利厚生が充実していない' => '福利厚生が充実していない',
+    ],
+    '🤝 人間関係・社風について' => [
+        '人間関係が良くない' => '人間関係が良くない',
+        '上下関係がキツイ' => '上下関係がキツイ',
+        '上司の指導・支援が不十分' => '上司の指導・支援が不十分',
+        '意思決定が遅い' => '意思決定が遅い',
+        'ハラスメントがある' => 'ハラスメントがある',
+        '感謝や称賛がない' => '感謝や称賛がない',
+        '情報共有が不足している' => '情報共有が不足している',
+        'チームワークを感じない' => 'チームワークを感じない',
+        '評価が上司の主観で左右される' => '評価が上司の主観で左右される',
+        '他責文化が強い' => '他責文化が強い',
+        '風通しが悪い' => '風通しが悪い',
+        '社内政治が強い' => '社内政治が強い',
+        '変化を嫌う体質' => '変化を嫌う体質',
+        'コンプライアンス意識が低い' => 'コンプライアンス意識が低い',
+    ],
+    '🚀 将来性について' => [
+        '会社の経営が不安' => '会社の経営が不安',
+        '業界の将来が不安' => '業界の将来が不安',
+        '自分のキャリアの可能性が見えない' => '自分のキャリアの可能性が見えない',
+    ],
 ];
+
+// バリデーション用：全選択肢を1次元配列に展開
+$allOptions = [];
+foreach ($optionsGrouped as $items) {
+    $allOptions = array_merge($allOptions, $items);
+}
 
 try {
     // 既存回答（途中再開用）
-    $sql = "SELECT id, values_important
+    $sql = "SELECT id, values_not_want
             FROM career_answers
             WHERE session_id = :sid AND user_id = :uid
             ORDER BY id DESC
@@ -102,13 +144,12 @@ try {
     $stmt->execute();
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // 既存の保存形式：「成長,自由 / 補足：xxx」を想定して復元
-    if ($existing && !empty($existing['values_important'])) {
-        $raw = (string)$existing['values_important'];
-
-        // 補足があれば取り出す
+    // 既存の回答を復元（形式：「選択肢1,選択肢2 / 補足：xxx」）
+    if ($existing && !empty($existing['values_not_want'])) {
+        $raw = (string)$existing['values_not_want'];
+        
         $note = '';
-        $parts = explode('/ 補足：', $raw, 2);
+        $parts = explode(' / 補足：', $raw, 2);
         $listPart = trim($parts[0]);
         if (count($parts) === 2) {
             $note = trim($parts[1]);
@@ -118,7 +159,7 @@ try {
             $tmp = array_map('trim', explode(',', $listPart));
             $selectedValues = array_values(array_filter($tmp, fn($v) => $v !== ''));
         }
-        $valuesNote = $note;
+        $jobStressNote = $note;
     }
 
     // POST：保存して次へ
@@ -129,55 +170,59 @@ try {
             exit('Invalid CSRF token');
         }
 
-        // checkboxは配列で来る
-        $selectedValues = $_POST['values_important'] ?? [];
+        $selectedValues = $_POST['job_stress'] ?? [];
         if (!is_array($selectedValues)) $selectedValues = [];
 
-        // 補足
-        $valuesNote = trim((string)($_POST['values_note'] ?? ''));
+        $jobStressNote = trim((string)($_POST['job_stress_note'] ?? ''));
 
-        // 選択肢のバリデーション（想定外の値を除外）
-        $selectedValues = array_values(array_filter($selectedValues, function ($v) use ($options) {
-            return is_string($v) && array_key_exists($v, $options);
+        // 想定外の値を除外
+        $selectedValues = array_values(array_filter($selectedValues, function ($v) use ($allOptions) {
+            return is_string($v) && array_key_exists($v, $allOptions);
         }));
 
-        // 必須：1つ以上選択
-        if (count($selectedValues) === 0) {
-            $error = '少なくとも1つ選択してください。';
+        // バリデーション：選択肢または補足のどちらかが必須
+        if (count($selectedValues) === 0 && $jobStressNote === '') {
+            $error = '選択肢を選ぶか、補足欄に記入してください。';
         } else {
             // DB保存用（CSV + 補足）
-            $saveText = implode(', ', $selectedValues);
-            if ($valuesNote !== '') {
-                $saveText .= ' / 補足：' . $valuesNote;
+            $saveText = '';
+            if (count($selectedValues) > 0) {
+                $saveText = implode(',', $selectedValues);
+            }
+            if ($jobStressNote !== '') {
+                if ($saveText !== '') {
+                    $saveText .= ' / 補足：' . $jobStressNote;
+                } else {
+                    $saveText = '補足：' . $jobStressNote;
+                }
             }
 
             $pdo->beginTransaction();
 
-            // career_answers があるなら UPDATE、なければ INSERT
             if ($existing) {
                 $update = "UPDATE career_answers
-                            SET values_important = :values_important,
+                            SET values_not_want = :values_not_want,
                                 updated_at = NOW()
                             WHERE id = :id AND session_id = :sid AND user_id = :uid";
                 $stmt = $pdo->prepare($update);
-                $stmt->bindValue(':values_important', $saveText, PDO::PARAM_STR);
+                $stmt->bindValue(':values_not_want', $saveText, PDO::PARAM_STR);
                 $stmt->bindValue(':id', (int)$existing['id'], PDO::PARAM_INT);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
-                $insert = "INSERT INTO career_answers (session_id, user_id, values_important, created_at, updated_at)
-                            VALUES (:sid, :uid, :values_important, NOW(), NOW())";
+                $insert = "INSERT INTO career_answers (session_id, user_id, values_not_want, created_at, updated_at)
+                            VALUES (:sid, :uid, :values_not_want, NOW(), NOW())";
                 $stmt = $pdo->prepare($insert);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
-                $stmt->bindValue(':values_important', $saveText, PDO::PARAM_STR);
+                $stmt->bindValue(':values_not_want', $saveText, PDO::PARAM_STR);
                 $stmt->execute();
             }
 
-            // セッション進捗を次へ（current_step=7）
+            // セッション進捗を次へ（current_step=8）
             $updSession = "UPDATE career_sessions
-                            SET current_step = 7,
+                            SET current_step = 8,
                                 updated_at = NOW()
                             WHERE id = :sid AND user_id = :uid";
             $stmt = $pdo->prepare($updSession);
@@ -201,48 +246,17 @@ try {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>アンケート - Q6</title>
+    <title>アンケート - Q7</title>
     <link rel="stylesheet" href="css/style.css" />
-    <style>
-        body { font-family: system-ui, -apple-system, "Noto Sans JP", sans-serif; background:#f6f7fb; margin:0; }
-        .wrap { max-width:720px; margin:0 auto; padding:24px; }
-        .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 6px 20px rgba(0,0,0,.06); }
-        .qno { font-weight:700; color:#6b7280; margin-bottom:6px; }
-        h1 { font-size:20px; margin:0 0 12px; }
-        .desc { color:#6b7280; margin:0 0 16px; font-size:14px; line-height:1.6; }
-        .err { background:#fff1f2; color:#9f1239; padding:10px 12px; border-radius:10px; margin-bottom:12px; }
-
-        .grid { display:grid; grid-template-columns:1fr; gap:10px; margin: 12px 0 14px; }
-        .opt {
-            display:flex; align-items:center; gap:10px;
-            padding:12px 12px; border:1px solid #e5e7eb; border-radius:12px;
-            cursor:pointer; background:#fff;
-        }
-        .opt input { transform: scale(1.2); }
-        textarea {
-            width:100%;
-            min-height: 120px;
-            padding: 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 16px;
-            box-sizing: border-box;
-            resize: vertical;
-        }
-        .label { font-weight:700; display:block; margin: 8px 0 6px; }
-        .actions { display:flex; justify-content:flex-end; margin-top:14px; }
-        .btn { border:0; background:#111827; color:#fff; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer; }
-        .hint { font-size:13px; color:#6b7280; margin-top:8px; line-height:1.6; }
-    </style>
 </head>
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q6 / 価値観</div>
-        <h1>大事にしたい価値観を選んでください（複数選択可）</h1>
+        <div class="qno">Q7 / 今の仕事</div>
+        <h1>今の仕事で「しんどい／モヤモヤする」ことは何かありますか？<br>（複数選択可）</h1>
         <p class="desc">
-            あなたの学習やキャリアの「優先順位」を一緒に整理するための質問です。<br>
-            直感でOKなので、近いものを選んでください。
+            あなたの価値観に合っていない「避けたい状況」を選んでください。<br>
+            これを踏まえて、無理なく続けられる学習設計を考えていきます。
         </p>
 
         <?php if ($error): ?>
@@ -252,23 +266,26 @@ try {
         <form method="post" action="">
             <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
 
-            <div class="grid">
-                <?php foreach ($options as $value => $label): ?>
-                    <label class="opt">
-                        <input
-                            type="checkbox"
-                            name="values_important[]"
-                            value="<?= h($value) ?>"
-                            <?= in_array($value, $selectedValues, true) ? 'checked' : '' ?>
-                        />
-                        <span><?= h($label) ?></span>
-                    </label>
-                <?php endforeach; ?>
-            </div>
+            <?php foreach ($optionsGrouped as $groupLabel => $items): ?>
+                <h3 style="font-size: 16px; font-weight: bold; margin: 24px 0 12px; color: #111827;"><?= h($groupLabel) ?></h3>
+                <div class="grid">
+                    <?php foreach ($items as $value => $label): ?>
+                        <label class="opt">
+                            <input
+                                type="checkbox"
+                                name="job_stress[]"
+                                value="<?= h($value) ?>"
+                                <?= in_array($value, $selectedValues, true) ? 'checked' : '' ?>
+                            />
+                            <span><?= h($label) ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+            <?php endforeach; ?>
 
             <span class="label">補足（任意）</span>
-            <textarea name="values_note" placeholder="例）自由：在宅で働きたい／挑戦：新規事業に関わりたい など"><?= h($valuesNote) ?></textarea>
-            <div class="hint">※補足は任意です。選択した理由や具体例があると、後の最適化がしやすくなります。</div>
+            <textarea name="job_stress_note"><?= h($jobStressNote) ?></textarea>
+            <div class="hint">※選択肢で伝えきれない具体的な状況があれば記入してください。</div>
 
             <div class="actions">
                 <button type="submit" class="btn">次へ</button>
@@ -278,3 +295,4 @@ try {
 </div>
 </body>
 </html>
+

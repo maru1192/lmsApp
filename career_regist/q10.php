@@ -64,11 +64,52 @@ if (empty($_SESSION['csrf_token'])) {
 $csrfToken = $_SESSION['csrf_token'];
 
 $error = '';
-$valuesImportant = '';
+$selectedPatterns = [];
+$motivationNote = '';
+
+/**
+ * 挫折パターンの選択肢（カテゴリーごとに分類）
+ */
+$optionsGrouped = [
+    '🎯 目標・計画が原因（設計ミス）' => [
+        '曖昧な目標で迷う（ゴールが見えず不安になる）' => '曖昧な目標で迷う（ゴールが見えず不安になる）',
+        '手順が分からず停止（次に何をやればいいか迷子になる）' => '手順が分からず停止（次に何をやればいいか迷子になる）',
+        '計画倒れで挫折（スケジュールが現実的じゃない）' => '計画倒れで挫折（スケジュールが現実的じゃない）',
+        '期限がないと先延ばし（締切がないと動けない）' => '期限がないと先延ばし（締切がないと動けない）',
+    ],
+    '🔄 実行・習慣が原因（続かない／日常に負ける）' => [
+        '忙しさに流されて後回し（優先順位が下がる）' => '忙しさに流されて後回し（優先順位が下がる）',
+        '習慣化できず空白が空く（1回抜けると戻れない）' => '習慣化できず空白が空く（1回抜けると戻れない）',
+        '最初に詰め込みすぎて燃え尽き（スタートダッシュで力尽きる）' => '最初に詰め込みすぎて燃え尽き（スタートダッシュで力尽きる）',
+        'やらされ感で続かない（義務感だけで取り組む）' => 'やらされ感で続かない（義務感だけで取り組む）',
+    ],
+    '⚠️ つまずき対応が原因（詰まって止まる）' => [
+        '一人で抱え込んで挫折（質問できず詰まる）' => '一人で抱え込んで挫折（質問できず詰まる）',
+        'つまずきを放置して離脱（小さなエラーで止まったまま）' => 'つまずきを放置して離脱（小さなエラーで止まったまま）',
+        '質問の仕方が分からない（何をどう聞けばいいか不明）' => '質問の仕方が分からない（何をどう聞けばいいか不明）',
+        '難易度が合わず挫折（簡単すぎor難しすぎ）' => '難易度が合わず挫折（簡単すぎor難しすぎ）',
+    ],
+    '💭 心理・自信が原因（怖さ／比較／完璧主義）' => [
+        '完璧主義で進まない（100%を求めて手が止まる）' => '完璧主義で進まない（100%を求めて手が止まる）',
+        '比較して自信を失う（他人と比べて落ち込む）' => '比較して自信を失う（他人と比べて落ち込む）',
+        'アウトプットが怖い（提出・公開が不安で止まる）' => 'アウトプットが怖い（提出・公開が不安で止まる）',
+        '成果が見えず不安（進捗実感がない）' => '成果が見えず不安（進捗実感がない）',
+    ],
+    '🏠 環境・コンディションが原因（物理的な要因）' => [
+        '生活リズムが崩れて停滞（睡眠不足で集中できない）' => '生活リズムが崩れて停滞（睡眠不足で集中できない）',
+        '体調・メンタルの波で中断（気分が落ちると止まる）' => '体調・メンタルの波で中断（気分が落ちると止まる）',
+    ],
+];
+
+// バリデーション用：全選択肢を1次元配列に展開
+$allOptions = [];
+foreach ($optionsGrouped as $items) {
+    $allOptions = array_merge($allOptions, $items);
+}
 
 try {
     // 既存回答（途中再開用）
-    $sql = "SELECT id, values_important
+    $sql = "SELECT id, values_not_want
             FROM career_answers
             WHERE session_id = :sid AND user_id = :uid
             ORDER BY id DESC
@@ -79,8 +120,21 @@ try {
     $stmt->execute();
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($existing && !empty($existing['values_important'])) {
-        $valuesImportant = (string)$existing['values_important'];
+    // 既存の保存形式：「パターンA,パターンB / 補足：xxx」を想定して復元
+    if ($existing && !empty($existing['values_not_want'])) {
+        $raw = (string)$existing['values_not_want'];
+
+        $note = '';
+        $parts = explode('/ 補足：', $raw, 2);
+        $listPart = trim($parts[0]);
+        if (count($parts) === 2) {
+            $note = trim($parts[1]);
+        }
+
+        if ($listPart !== '') {
+            $selectedPatterns = array_map('trim', explode(',', $listPart));
+        }
+        $motivationNote = $note;
     }
 
     // POST：保存して次へ
@@ -91,41 +145,63 @@ try {
             exit('Invalid CSRF token');
         }
 
-        $valuesImportant = trim((string)($_POST['values_important'] ?? ''));
+        // checkboxは配列で来る
+        $selectedPatterns = $_POST['failure_patterns'] ?? [];
+        if (!is_array($selectedPatterns)) $selectedPatterns = [];
 
-        // バリデーション
-        if ($valuesImportant === '') {
-            $error = '入力してください。';
-        } elseif (mb_strlen($valuesImportant) > 5000) {
-            $error = '長すぎます（5000文字以内）。';
+        // 補足
+        $motivationNote = trim((string)($_POST['motivation_note'] ?? ''));
+
+        // 選択肢のバリデーション（想定外の値を除外）
+        $selectedPatterns = array_values(array_filter($selectedPatterns, function ($v) use ($allOptions) {
+            return is_string($v) && array_key_exists($v, $allOptions);
+        }));
+
+        // 必須：1つ以上選択、または補足記入
+        if (count($selectedPatterns) === 0 && $motivationNote === '') {
+            $error = '挫折パターンを1つ以上選択するか、補足を記入してください。';
+        } elseif (mb_strlen($motivationNote) > 3000) {
+            $error = '補足が長すぎます（3000文字以内）。';
         } else {
             $pdo->beginTransaction();
+
+            // カンマ区切り + 補足で保存
+            $patternsValue = implode(',', $selectedPatterns);
+            if ($motivationNote !== '') {
+                $finalValue = $patternsValue . ' / 補足：' . $motivationNote;
+            } else {
+                $finalValue = $patternsValue;
+            }
 
             // career_answers があるなら UPDATE、なければ INSERT
             if ($existing) {
                 $update = "UPDATE career_answers
-                            SET values_important = :values_important,
+                            SET values_not_want = :values_not_want,
                                 updated_at = NOW()
                             WHERE id = :id AND session_id = :sid AND user_id = :uid";
                 $stmt = $pdo->prepare($update);
-                $stmt->bindValue(':values_important', $valuesImportant, PDO::PARAM_STR);
+                $stmt->bindValue(':values_not_want', $finalValue, PDO::PARAM_STR);
                 $stmt->bindValue(':id', (int)$existing['id'], PDO::PARAM_INT);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
-                $insert = "INSERT INTO career_answers (session_id, user_id, values_important, created_at, updated_at)
-                            VALUES (:sid, :uid, :values_important, NOW(), NOW())";
+                $insert = "INSERT INTO 
+                                career_answers (session_id, user_id, values_not_want, created_at, updated_at)
+                            VALUES 
+                                (:sid, :uid, :values_not_want, NOW(), NOW())";
                 $stmt = $pdo->prepare($insert);
                 $stmt->bindValue(':sid', $careerSessionId, PDO::PARAM_INT);
                 $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
-                $stmt->bindValue(':values_important', $valuesImportant, PDO::PARAM_STR);
+                $stmt->bindValue(':values_not_want', $finalValue, PDO::PARAM_STR);
                 $stmt->execute();
             }
 
-            // セッション進捗を次に進める（current_step=11）
+            // セッションを完了に更新（current_step=12, status=completed, completed_at設定）
             $updSession = "UPDATE career_sessions
-                            SET current_step = 11,
+                            SET current_step = 12,
+                                status = 'completed',
+                                completed_at = NOW(),
                                 updated_at = NOW()
                             WHERE id = :sid AND user_id = :uid";
             $stmt = $pdo->prepare($updSession);
@@ -135,7 +211,7 @@ try {
 
             $pdo->commit();
 
-            header('Location: q11.php');
+            header('Location: thanks.php');
             exit;
         }
     }
@@ -149,48 +225,26 @@ try {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>アンケート - Q10</title>
+    <title>アンケート - Q11</title>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        body { font-family: system-ui, -apple-system, "Noto Sans JP", sans-serif; background:#f6f7fb; margin:0; }
-        .wrap { max-width:720px; margin:0 auto; padding:24px; }
-        .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 6px 20px rgba(0,0,0,.06); }
-        .qno { font-weight:700; color:#6b7280; margin-bottom:6px; }
-        h1 { font-size:20px; margin:0 0 12px; }
-        .desc { color:#6b7280; margin:0 0 16px; font-size:14px; line-height:1.6; }
-        .err { background:#fff1f2; color:#9f1239; padding:10px 12px; border-radius:10px; margin-bottom:12px; }
-
         textarea {
-            width:100%;
-            min-height: 240px;
-            padding: 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 16px;
-            box-sizing: border-box;
-            resize: vertical;
-            line-height: 1.6;
+            min-height: 140px;
         }
-
-        .hint {
-            font-size:13px;
-            color:#6b7280;
-            margin-top:8px;
-            line-height:1.6;
+        .label {
+            margin: 8px 0 6px;
+            padding-top: 20px;
         }
-
-        .actions { display:flex; justify-content:flex-end; margin-top:14px; }
-        .btn { border:0; background:#111827; color:#fff; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer; }
     </style>
 </head>
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="qno">Q10 / 価値観</div>
-        <h1>あなたが「大事にしたい価値観」は何ですか？</h1>
+        <div class="qno">Q11 / 挫折パターン</div>
+        <h1>過去に挫折したパターンを教えてください</h1>
         <p class="desc">
-            仕事・人生の意思決定の軸になるものを言語化していきます。<br>
-            例：自由、成長、安定、挑戦、家族、健康、誠実さ、影響力、貢献、専門性、創造性 など
+            自分の「うまくいかないパターン」を知ると、無理のない学習設計ができます。<br>
+            当てはまるものを選び、補足があれば自由に記入してください（選択のみでもOK）
         </p>
 
         <?php if ($error): ?>
@@ -200,15 +254,33 @@ try {
         <form method="post" action="">
             <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>">
 
+            <?php foreach ($optionsGrouped as $groupLabel => $items): ?>
+                <h3 style="font-size: 16px; font-weight: bold; margin: 24px 0 12px; color: #111827;"><?= h($groupLabel) ?></h3>
+                <div class="grid">
+                    <?php foreach ($items as $value => $label): ?>
+                        <label class="opt">
+                            <input
+                                type="checkbox"
+                                name="failure_patterns[]"
+                                value="<?= h($value) ?>"
+                                <?= in_array($value, $selectedPatterns) ? 'checked' : '' ?>
+                            />
+                            <span><?= h($label) ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+            <?php endforeach; ?>
+
+            <span class="label">他にどんな状況だとモチベーションが下がりそうですか？</span>
             <textarea
-                name="values_important"
+                name="motivation_note"
                 placeholder="例）
-・大事にしたい価値観（3〜10個くらい）
-・その価値観を大事にしたい理由
-・過去にその価値観が満たされて嬉しかった経験 / 満たされず辛かった経験"><?= h($valuesImportant) ?></textarea>
+・具体的な状況や場面
+・過去にそうなった時のエピソード
+・それが起きると、どう感じるか"><?= h($motivationNote) ?></textarea>
 
             <div class="hint">
-                書きづらければ「今の生活で、何が満たされると嬉しい？」「逆に、何が削られるとつらい？」から考えるのがオススメです。
+                選択肢だけでもOK、補足だけでもOKです。自分のペースで振り返ってみてください。
             </div>
 
             <div class="actions">

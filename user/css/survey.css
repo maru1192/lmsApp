@@ -1,0 +1,240 @@
+/* user/css/survey.css */
+
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #0b2f4a;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+}
+
+.page-title i {
+    color: #f1b24d;
+}
+
+/* 空の状態 */
+.empty-state {
+    background: #fff;
+    border-radius: 12px;
+    padding: 60px 40px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.empty-state i {
+    font-size: 64px;
+    color: #d1d5db;
+    margin-bottom: 20px;
+}
+
+.empty-state p {
+    font-size: 18px;
+    color: #6b7280;
+    margin-bottom: 30px;
+}
+
+.btn-start {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 36px;
+    background: linear-gradient(135deg, #1a4f9c 0%, #2563eb 100%);
+    color: #fff;
+    font-weight: 800;
+    font-size: 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(26, 79, 156, 0.3);
+}
+
+.btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(26, 79, 156, 0.4);
+}
+
+/* ステータスバッジ */
+.survey-status {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.status-badge.completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.in-progress {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.date-info {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* コンテンツカード */
+.content-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* アンケートセクション */
+.survey-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.survey-section {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 20px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.survey-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.question-number {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #f1b24d 0%, #f59e0b 100%);
+    color: #fff;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    font-weight: 900;
+    box-shadow: 0 4px 8px rgba(241, 178, 77, 0.3);
+}
+
+.question-content {
+    flex: 1;
+}
+
+.question-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 16px 0;
+}
+
+.answer-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6b7280;
+    margin-top: 12px;
+    margin-bottom: 6px;
+}
+
+.answer-text {
+    font-size: 16px;
+    color: #374151;
+    line-height: 1.7;
+    padding: 16px 20px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border-left: 4px solid #f1b24d;
+}
+
+.answer-text.long-text {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* アクションボタン */
+.action-buttons {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 2px solid #e5e7eb;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-continue {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 32px;
+    background: linear-gradient(135deg, #1a4f9c 0%, #2563eb 100%);
+    color: #fff;
+    font-weight: 800;
+    font-size: 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(26, 79, 156, 0.3);
+}
+
+.btn-continue:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(26, 79, 156, 0.4);
+}
+
+.btn-continue:active {
+    transform: translateY(0);
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+    .content-card {
+        padding: 20px;
+    }
+
+    .survey-section {
+        grid-template-columns: 50px 1fr;
+        gap: 12px;
+    }
+
+    .question-number {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+
+    .question-title {
+        font-size: 18px;
+    }
+
+    .answer-text {
+        font-size: 15px;
+        padding: 12px 16px;
+    }
+
+    .page-title {
+        font-size: 22px;
+    }
+
+    .empty-state {
+        padding: 40px 20px;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+    }
+}

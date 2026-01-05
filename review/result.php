@@ -13,8 +13,15 @@ try {
     exit('DBConnectError' . $e->getMessage());
 }
 
-//２．データ取得SQL作成
-$stmt = $pdo->prepare("SELECT * FROM weekly_reviews ORDER BY created_at DESC");     //新しい順に表示
+// ログイン中のユーザーIDを取得
+$userId = $_SESSION['user_id'] ?? 0;
+
+//２．データ取得SQL作成（ログインユーザーのデータのみ）
+$stmt = $pdo->prepare("SELECT * FROM 
+                            weekly_reviews
+                        WHERE user_id = :user_id 
+                        ORDER BY created_at DESC");
+$stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
 $status = $stmt->execute();
 
 //３．データ表示
